@@ -375,15 +375,6 @@ impl From<(ErrorKind, &'static str, String)> for RpError {
 }
 
 impl error::Error for RpError {
-    fn description(&self) -> &str {
-        match self.repr {
-            ErrorRepr::WithDescription(_, desc) => desc,
-            ErrorRepr::WithDescriptionAndDetail(_, desc, _) => desc,
-            ErrorRepr::ExtensionError(_, _) => "extension error",
-            ErrorRepr::IoError(ref err) => err.description(),
-        }
-    }
-
     fn cause(&self) -> Option<&dyn error::Error> {
         match self.repr {
             ErrorRepr::IoError(ref err) => Some(err as &dyn error::Error),

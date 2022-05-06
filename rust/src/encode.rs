@@ -1,12 +1,7 @@
 use std::io::Write;
 use std::mem;
 
-use crate::{TYPE_ARR, TYPE_STR_IDX};
-
-use super::{
-    StrConfig, get_type_by_name, get_type_by_value, Buffer, ErrorKind, Field, RpResult,
-    Value, STR_TYPE_NIL,
-};
+use crate::{get_type_by_value, Buffer, RpResult, StrConfig, Value, TYPE_STR_IDX};
 
 fn append_and_align(buffer: &mut Buffer, val: &[u8]) -> RpResult<()> {
     let _add = match val.len() % 2 {
@@ -56,11 +51,7 @@ pub fn encode_number(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     Ok(())
 }
 
-pub fn encode_str_idx(
-    buffer: &mut Buffer,
-    config: &mut StrConfig,
-    pattern: &str,
-) -> RpResult<()> {
+pub fn encode_str_idx(buffer: &mut Buffer, config: &mut StrConfig, pattern: &str) -> RpResult<()> {
     let idx = config.add_str(pattern.to_string());
     encode_sure_type(buffer, TYPE_STR_IDX)?;
     encode_number(buffer, &Value::U16(idx))?;
@@ -137,7 +128,6 @@ pub fn encode_proto(buffer: &mut Buffer, name: &String, infos: Vec<Value>) -> Rp
     let mut sub_buffer = Buffer::new();
     encode_str_raw(&mut sub_buffer, &Value::Str(name.clone()))?;
     encode_field(&mut sub_buffer, &mut config, &Value::from(infos))?;
-
 
     encode_number(buffer, &Value::U16(config.str_arr.len() as u16))?;
     for v in config.str_arr {
