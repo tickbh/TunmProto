@@ -132,7 +132,7 @@ impl StrConfig {
 
     pub fn add_str(&mut self, value: String) -> u16 {
         if self.str_arr.contains(&value) {
-            self.str_arr.partition_point(|x| x == &value) as u16
+            self.str_arr.iter().position(|x| x == &value).unwrap() as u16
         } else {
             self.str_arr.push(value);
             self.str_arr.len() as u16 - 1
