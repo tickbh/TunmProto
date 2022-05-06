@@ -1,34 +1,12 @@
 use std::io::Write;
 use std::mem;
-use std::collections::HashMap;
 
-use crate::{TYPE_ARR, TYPE_STR, TYPE_STR_IDX};
+use crate::{TYPE_ARR, TYPE_STR_IDX};
 
-use super::{Value, Buffer, Field, RpResult, ErrorKind, get_type_by_name, get_name_by_type, get_type_by_value, STR_TYPE_NIL};
-
-#[derive(Debug)]
-pub struct EncodeConfig {
-    msg_name: String,
-    str_idx: HashMap<String, u16>,
-    now_idx: u16,
-}
-
-impl EncodeConfig {
-    pub fn new(msg_name: String) -> Self {
-        EncodeConfig { msg_name: msg_name, str_idx: HashMap::new(), now_idx: 0 }
-    }
-
-    pub fn add_str(&mut self, value: String) -> u16 {
-        if self.str_idx.contains_key(&value) {
-            self.str_idx[&value]
-        } else {
-            self.now_idx += 1;
-            self.str_idx.insert(value, self.now_idx);
-            self.now_idx
-        }
-    }
-}
-
+use super::{
+    StrConfig, get_type_by_name, get_type_by_value, Buffer, ErrorKind, Field, RpResult,
+    Value, STR_TYPE_NIL,
+};
 
 fn append_and_align(buffer: &mut Buffer, val: &[u8]) -> RpResult<()> {
     let _add = match val.len() % 2 {
@@ -39,8 +17,7 @@ fn append_and_align(buffer: &mut Buffer, val: &[u8]) -> RpResult<()> {
     Ok(())
 }
 
-
-pub fn encode_sure_type(buffer: &mut Buffer, value: u16) -> RpResult<()> {
+pub fn encode_sure_type(buffer: &mut Buffer, value: u8) -> RpResult<()> {
     buffer.write(unsafe { &mem::transmute::<u8, [u8; 1]>(value as u8) })?;
     Ok(())
 }
@@ -79,7 +56,11 @@ pub fn encode_number(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     Ok(())
 }
 
-pub fn encode_str_idx(buffer: &mut Buffer, config: &mut EncodeConfig, pattern: &str) -> RpResult<()> {
+pub fn encode_str_idx(
+    buffer: &mut Buffer,
+    config: &mut StrConfig,
+    pattern: &str,
+) -> RpResult<()> {
     let idx = config.add_str(pattern.to_string());
     encode_sure_type(buffer, TYPE_STR_IDX)?;
     encode_number(buffer, &Value::U16(idx))?;
@@ -101,12 +82,10 @@ pub fn encode_str_raw(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     Ok(())
 }
 
-pub fn encode_map(buffer: &mut Buffer, config: &mut EncodeConfig, value: &Value) -> RpResult<()> {
+pub fn encode_map(buffer: &mut Buffer, config: &mut StrConfig, value: &Value) -> RpResult<()> {
     match *value {
         Value::Map(ref val) => {
-            encode_type(buffer, value);
             encode_number(buffer, &Value::from(val.len() as u16))?;
-            
             for (name, sub_value) in val {
                 encode_field(buffer, config, name)?;
                 encode_field(buffer, config, sub_value)?;
@@ -117,30 +96,22 @@ pub fn encode_map(buffer: &mut Buffer, config: &mut EncodeConfig, value: &Value)
     Ok(())
 }
 
-
-pub fn write_field(buffer: &mut Buffer, field: Option<&Field>) -> RpResult<bool> {
-    if field.is_none() {
-        return Ok(false);
-    }
-    let field = field.unwrap();
-    encode_number(buffer, &Value::U16(field.index))?;
-    encode_number(buffer, &Value::U16(get_type_by_name(&field.pattern)))?;
-    Ok(true)
-}
-
-pub fn encode_field(buffer: &mut Buffer, config: &mut EncodeConfig, value: &Value) -> RpResult<()> {
-    match *value {
-        Value::U8(_) |
-        Value::I8(_) |
-        Value::U16(_) |
-        Value::I16(_) |
-        Value::U32(_) |
-        Value::I32(_) |
-        Value::Float(_) => {
+pub fn encode_field(buffer: &mut Buffer, config: &mut StrConfig, value: &Value) -> RpResult<()> {
+    match &*value {
+        Value::U8(_)
+        | Value::I8(_)
+        | Value::U16(_)
+        | Value::I16(_)
+        | Value::U32(_)
+        | Value::I32(_)
+        | Value::Float(_) => {
             encode_type(buffer, value)?;
             encode_number(buffer, value)?;
         }
-        Value::Str(_) | Value::Raw(_) => {
+        Value::Str(ref pattern) => {
+            encode_str_idx(buffer, config, pattern)?;
+        }
+        Value::Raw(_) => {
             encode_type(buffer, value)?;
             encode_str_raw(buffer, value)?;
         }
@@ -160,15 +131,18 @@ pub fn encode_field(buffer: &mut Buffer, config: &mut EncodeConfig, value: &Valu
     Ok(())
 }
 
-pub fn encode_proto(buffer: &mut Buffer,
-                    name: &String,
-                    infos: Vec<Value>)
-                    -> RpResult<()> {
-    let mut config = EncodeConfig::new(name.to_string());
-    encode_str_raw(buffer, &Value::Str(name.clone()))?;
-    encode_sure_type(buffer, TYPE_ARR)?;
-    for info in &infos {
-        encode_field(buffer, &mut config, info)?;
+pub fn encode_proto(buffer: &mut Buffer, name: &String, infos: Vec<Value>) -> RpResult<()> {
+    let mut config = StrConfig::new();
+
+    let mut sub_buffer = Buffer::new();
+    encode_str_raw(&mut sub_buffer, &Value::Str(name.clone()))?;
+    encode_field(&mut sub_buffer, &mut config, &Value::from(infos))?;
+
+
+    encode_number(buffer, &Value::U16(config.str_arr.len() as u16))?;
+    for v in config.str_arr {
+        encode_str_raw(buffer, &Value::Str(v))?;
     }
+    buffer.extend(&sub_buffer)?;
     Ok(())
 }

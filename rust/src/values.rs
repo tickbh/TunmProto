@@ -5,19 +5,19 @@ use std::io;
 use std::hash::Hash;
 
 
-pub const TYPE_NIL: u16 = 0;
-pub const TYPE_U8: u16 = 1;
-pub const TYPE_I8: u16 = 2;
-pub const TYPE_U16: u16 = 3;
-pub const TYPE_I16: u16 = 4;
-pub const TYPE_U32: u16 = 5;
-pub const TYPE_I32: u16 = 6;
-pub const TYPE_FLOAT: u16 = 7;
-pub const TYPE_STR: u16 = 8;
-pub const TYPE_STR_IDX: u16 = 9;
-pub const TYPE_RAW: u16 = 10;
-pub const TYPE_ARR: u16 = 11;
-pub const TYPE_MAP: u16 = 12;
+pub const TYPE_NIL: u8 = 0;
+pub const TYPE_U8: u8 = 1;
+pub const TYPE_I8: u8 = 2;
+pub const TYPE_U16: u8 = 3;
+pub const TYPE_I16: u8 = 4;
+pub const TYPE_U32: u8 = 5;
+pub const TYPE_I32: u8 = 6;
+pub const TYPE_FLOAT: u8 = 7;
+pub const TYPE_STR: u8 = 8;
+pub const TYPE_STR_IDX: u8 = 9;
+pub const TYPE_RAW: u8 = 10;
+pub const TYPE_ARR: u8 = 11;
+pub const TYPE_MAP: u8 = 12;
 
 pub const STR_TYPE_NIL: &'static str = "nil";
 pub const STR_TYPE_U8: &'static str = "u8";
@@ -132,6 +132,12 @@ impl From<Vec<u8>> for Value {
     }
 }
 
+impl From<Vec<Value>> for Value {
+    fn from(val: Vec<Value>) -> Value {
+        Value::Arr(val)
+    }
+}
+
 impl From<HashMap<Value, Value>> for Value {
     fn from(val: HashMap<Value, Value>) -> Value {
         Value::Map(val)
@@ -142,7 +148,7 @@ impl Into<u8> for Value {
     fn into(self) -> u8 {
         match self {
             Value::U8(val) => val,
-            _ => panic!("into error"),
+            _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
 }
@@ -151,7 +157,7 @@ impl Into<i8> for Value {
     fn into(self) -> i8 {
         match self {
             Value::I8(val) => val,
-            _ => panic!("into error"),
+            _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
 }
@@ -160,7 +166,7 @@ impl Into<u16> for Value {
     fn into(self) -> u16 {
         match self {
             Value::U16(val) => val,
-            _ => panic!("into error"),
+            _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
 }
@@ -169,7 +175,7 @@ impl Into<i16> for Value {
     fn into(self) -> i16 {
         match self {
             Value::I16(val) => val,
-            _ => panic!("into error"),
+            _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
 }
@@ -178,7 +184,7 @@ impl Into<u32> for Value {
     fn into(self) -> u32 {
         match self {
             Value::U32(val) => val,
-            _ => panic!("into error"),
+            _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
 }
@@ -187,7 +193,7 @@ impl Into<i32> for Value {
     fn into(self) -> i32 {
         match self {
             Value::I32(val) => val,
-            _ => panic!("into error"),
+            _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
 }
@@ -196,7 +202,7 @@ impl Into<f32> for Value {
     fn into(self) -> f32 {
         match self {
             Value::Float(val) => val,
-            _ => panic!("into error"),
+            _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
 }
@@ -205,7 +211,7 @@ impl Into<String> for Value {
     fn into(self) -> String {
         match self {
             Value::Str(val) => val,
-            _ => panic!("into error"),
+            _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
 }
@@ -214,7 +220,16 @@ impl Into<Vec<u8>> for Value {
     fn into(self) -> Vec<u8> {
         match self {
             Value::Raw(val) => val,
-            _ => panic!("into error"),
+            _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
+        }
+    }
+}
+
+impl Into<Vec<Value>> for Value {
+    fn into(self) -> Vec<Value> {
+        match self {
+            Value::Arr(val) => val,
+            _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
 }
@@ -223,13 +238,13 @@ impl Into<HashMap<Value, Value>> for Value {
     fn into(self) -> HashMap<Value, Value> {
         match self {
             Value::Map(val) => val,
-            _ => panic!("into error"),
+            _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
 }
 
 
-pub fn get_type_by_value(value: &Value) -> u16 {
+pub fn get_type_by_value(value: &Value) -> u8 {
     match *value {
         Value::U8(_) => TYPE_U8,
         Value::I8(_) => TYPE_I8,
@@ -246,7 +261,7 @@ pub fn get_type_by_value(value: &Value) -> u16 {
     }
 }
 
-pub fn get_type_by_name(name: &str) -> u16 {
+pub fn get_type_by_name(name: &str) -> u8 {
     match name {
         STR_TYPE_NIL => TYPE_NIL,
         STR_TYPE_U8 => TYPE_U8,
@@ -264,7 +279,7 @@ pub fn get_type_by_name(name: &str) -> u16 {
     }
 }
 
-pub fn get_name_by_type(index: u16) -> &'static str {
+pub fn get_name_by_type(index: u8) -> &'static str {
     match index {
         TYPE_NIL => STR_TYPE_NIL,
         TYPE_U8 => STR_TYPE_U8,

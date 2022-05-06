@@ -22,8 +22,20 @@ impl Buffer {
         &self.val
     }
 
+    pub fn get_write_data(&self) -> &[u8] {
+        &self.val[self.rpos .. self.wpos]
+    }
+    
     pub fn len(&self) -> usize {
         self.val.len()
+    }
+
+    pub fn data_len(&self) -> usize {
+        if self.wpos > self.rpos {
+            (self.wpos - self.rpos) as usize
+        } else {
+            0
+        }
     }
 
     pub fn set_rpos(&mut self, rpos: usize) {
@@ -61,6 +73,10 @@ impl Buffer {
         self.rpos = 0;
         self.wpos = 0;
     }
+
+    pub fn extend(&mut self, buffer: &Buffer) -> Result<usize> {
+        self.write(buffer.get_write_data())
+    }
 }
 
 impl fmt::Debug for Buffer {
@@ -71,7 +87,7 @@ impl fmt::Debug for Buffer {
 
 impl Read for Buffer {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        let left = self.val.len() - self.rpos;
+        let left = self.wpos - self.rpos;
         if left == 0 || buf.len() == 0 {
             return Ok(0);
         }
@@ -84,6 +100,10 @@ impl Read for Buffer {
             ptr::copy(&self.val[self.rpos], &mut buf[0], read);
         }
         self.rpos += read;
+        if self.rpos >= self.wpos {
+            self.rpos = 0;
+            self.wpos = 0;
+        }
         Ok(read)
     }
 }
