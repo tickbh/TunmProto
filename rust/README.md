@@ -1,3 +1,11 @@
+# rt_proto
+tickbh rust bin protocol
+
+## suport type
+base type is contain "u8",   "i8",   "u16",   "i16",   "u32",   "i32",   "float",   "string",  "raw",   "map", "array"
+
+# example proto
+```rust
 extern crate rt_proto as rt;
 use rt::{Value, Buffer};
 
@@ -26,3 +34,11 @@ fn main()
         }
     }
 }
+
+```
+it will encode Vec<Value> accords to proto name like as "cmd_test_op" define args is [map]
+
+# compatible
+it will ensure data decoded maximum
+ - old protocol can decode the new protocol if new protocol not change the old field info, but it will miss some info
+ - new protocol can decode the old protocol all datas
