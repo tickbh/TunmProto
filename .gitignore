@@ -1,1 +1,4 @@
 /rust/target
+*/.vscode
+/godot/.import
+/godot/.mono/
