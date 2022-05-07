@@ -6,23 +6,25 @@ use std::hash::Hash;
 
 
 pub const TYPE_NIL: u8 = 0;
-pub const TYPE_U8: u8 = 1;
-pub const TYPE_I8: u8 = 2;
-pub const TYPE_U16: u8 = 3;
-pub const TYPE_I16: u8 = 4;
-pub const TYPE_U32: u8 = 5;
-pub const TYPE_I32: u8 = 6;
-pub const TYPE_U64: u8 = 7;
-pub const TYPE_I64: u8 = 8;
-pub const TYPE_FLOAT: u8 = 9;
-pub const TYPE_DOUBLE: u8 = 10;
-pub const TYPE_STR: u8 = 11;
-pub const TYPE_STR_IDX: u8 = 12;
-pub const TYPE_RAW: u8 = 13;
-pub const TYPE_ARR: u8 = 14;
-pub const TYPE_MAP: u8 = 15;
+pub const TYPE_BOOL: u8 = 1;
+pub const TYPE_U8: u8 = 2;
+pub const TYPE_I8: u8 = 3;
+pub const TYPE_U16: u8 = 4;
+pub const TYPE_I16: u8 = 5;
+pub const TYPE_U32: u8 = 6;
+pub const TYPE_I32: u8 = 7;
+pub const TYPE_U64: u8 = 8;
+pub const TYPE_I64: u8 = 9;
+pub const TYPE_FLOAT: u8 = 10;
+pub const TYPE_DOUBLE: u8 = 11;
+pub const TYPE_STR: u8 = 12;
+pub const TYPE_STR_IDX: u8 = 13;
+pub const TYPE_RAW: u8 = 14;
+pub const TYPE_ARR: u8 = 15;
+pub const TYPE_MAP: u8 = 16;
 
 pub const STR_TYPE_NIL: &'static str = "nil";
+pub const STR_TYPE_BOOL: &'static str = "bool";
 pub const STR_TYPE_U8: &'static str = "u8";
 pub const STR_TYPE_I8: &'static str = "i8";
 pub const STR_TYPE_U16: &'static str = "u16";
@@ -42,6 +44,7 @@ pub const STR_TYPE_MAP: &'static str = "map";
 #[derive(PartialEq, Clone)]
 pub enum Value {
     Nil,
+    Bool(bool),
     U8(u8),
     I8(i8),
     U16(u16),
@@ -72,6 +75,7 @@ impl fmt::Debug for Value {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Value::Nil => write!(fmt, "nil"),
+            Value::Bool(val) => write!(fmt, "bool({:?})", val),
             Value::U8(val) => write!(fmt, "u8({:?})", val),
             Value::I8(val) => write!(fmt, "i8({:?})", val),
             Value::U16(val) => write!(fmt, "u16({:?})", val),
@@ -87,6 +91,12 @@ impl fmt::Debug for Value {
             Value::Arr(ref val) => write!(fmt, "arr({:?})", val),
             Value::Map(ref val) => write!(fmt, "str({:?})", val),
         }
+    }
+}
+
+impl From<bool> for Value {
+    fn from(val: bool) -> Value {
+        Value::Bool(val)
     }
 }
 
@@ -171,6 +181,15 @@ impl From<Vec<Value>> for Value {
 impl From<HashMap<Value, Value>> for Value {
     fn from(val: HashMap<Value, Value>) -> Value {
         Value::Map(val)
+    }
+}
+
+impl Into<bool> for Value {
+    fn into(self) -> bool {
+        match self {
+            Value::Bool(val) => val,
+            _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
+        }
     }
 }
 
@@ -305,6 +324,7 @@ impl Into<HashMap<Value, Value>> for Value {
 
 pub fn get_type_by_value(value: &Value) -> u8 {
     match *value {
+        Value::Bool(_) => TYPE_BOOL,
         Value::U8(_) => TYPE_U8,
         Value::I8(_) => TYPE_I8,
         Value::U16(_) => TYPE_U16,
@@ -326,6 +346,7 @@ pub fn get_type_by_value(value: &Value) -> u8 {
 pub fn get_type_by_name(name: &str) -> u8 {
     match name {
         STR_TYPE_NIL => TYPE_NIL,
+        STR_TYPE_BOOL => TYPE_BOOL,
         STR_TYPE_U8 => TYPE_U8,
         STR_TYPE_I8 => TYPE_I8,
         STR_TYPE_U16 => TYPE_U16,
@@ -347,6 +368,7 @@ pub fn get_type_by_name(name: &str) -> u8 {
 pub fn get_name_by_type(index: u8) -> &'static str {
     match index {
         TYPE_NIL => STR_TYPE_NIL,
+        TYPE_BOOL => STR_TYPE_BOOL,
         TYPE_U8 => STR_TYPE_U8,
         TYPE_I8 => STR_TYPE_I8,
         TYPE_U16 => STR_TYPE_U16,

@@ -5,7 +5,7 @@ use std::mem;
 use crate::TYPE_STR_IDX;
 
 use super::{StrConfig, Value, Buffer, RpResult, ErrorKind};
-use super::{TYPE_NIL, TYPE_U8, TYPE_I8, TYPE_U16, TYPE_I16, TYPE_U32, TYPE_I32, TYPE_U64, TYPE_I64, TYPE_FLOAT, TYPE_DOUBLE, TYPE_STR,
+use super::{TYPE_NIL, TYPE_BOOL, TYPE_U8, TYPE_I8, TYPE_U16, TYPE_I16, TYPE_U32, TYPE_I32, TYPE_U64, TYPE_I64, TYPE_FLOAT, TYPE_DOUBLE, TYPE_STR,
      TYPE_RAW, TYPE_ARR, TYPE_MAP};
 use super::{make_extension_error};
 
@@ -15,6 +15,18 @@ pub fn decode_type(buffer: &mut Buffer) -> RpResult<Value> {
     Ok(Value::from(data[0]))
 }
 
+pub fn decode_bool(buffer: &mut Buffer, pattern: u8) -> RpResult<Value> {
+    match pattern {
+        TYPE_BOOL => {
+            let data: &mut [u8; 1] = &mut [0];
+            try_read!(buffer.read(data), data.len());
+            Ok(Value::from(if data[0] == 1 { true } else { false }))
+        }
+        _ => {
+            unreachable!("not other numbers");
+        }
+    }
+}
 
 pub fn decode_number(buffer: &mut Buffer, pattern: u8) -> RpResult<Value> {
     match pattern {
@@ -135,6 +147,9 @@ pub fn decode_arr(buffer: &mut Buffer, config: &StrConfig) -> RpResult<Value> {
 
 fn decode_by_pattern(buffer: &mut Buffer, config: &StrConfig, pattern: &u8) -> RpResult<Value> {
     match *pattern {
+        TYPE_BOOL => {
+            decode_bool(buffer, *pattern)
+        }
         TYPE_U8 | TYPE_I8 | TYPE_U16 | TYPE_I16 | TYPE_U32 | TYPE_I32 | TYPE_FLOAT => {
             decode_number(buffer, *pattern)
         }

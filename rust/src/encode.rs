@@ -22,6 +22,16 @@ pub fn encode_type(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     Ok(())
 }
 
+pub fn encode_bool(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
+    match *value {
+        Value::Bool(val) => {
+            buffer.write(unsafe { &mem::transmute::<u8, [u8; 1]>(if val { 1 } else { 0 }) })?;
+        }
+        _ => unreachable!("encode_number only"),
+    }
+    Ok(())
+}
+
 pub fn encode_number(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     match *value {
         Value::U8(val) => {
@@ -99,6 +109,10 @@ pub fn encode_map(buffer: &mut Buffer, config: &mut StrConfig, value: &Value) ->
 
 pub fn encode_field(buffer: &mut Buffer, config: &mut StrConfig, value: &Value) -> RpResult<()> {
     match &*value {
+        Value::Bool(_) => {
+            encode_type(buffer, value)?;
+            encode_bool(buffer, value)?;
+        }
         Value::U8(_)
         | Value::I8(_)
         | Value::U16(_)
@@ -130,7 +144,9 @@ pub fn encode_field(buffer: &mut Buffer, config: &mut StrConfig, value: &Value) 
             encode_type(buffer, value)?;
             encode_map(buffer, config, value)?;
         }
-        Value::Nil => {}
+        Value::Nil => {
+            encode_type(buffer, value)?;
+        }
     }
     Ok(())
 }
