@@ -5,7 +5,7 @@ use std::mem;
 use crate::TYPE_STR_IDX;
 
 use super::{StrConfig, Value, Buffer, RpResult, ErrorKind};
-use super::{TYPE_NIL, TYPE_U8, TYPE_I8, TYPE_U16, TYPE_I16, TYPE_U32, TYPE_I32, TYPE_FLOAT, TYPE_STR,
+use super::{TYPE_NIL, TYPE_U8, TYPE_I8, TYPE_U16, TYPE_I16, TYPE_U32, TYPE_I32, TYPE_U64, TYPE_I64, TYPE_FLOAT, TYPE_DOUBLE, TYPE_STR,
      TYPE_RAW, TYPE_ARR, TYPE_MAP};
 use super::{make_extension_error};
 
@@ -52,11 +52,29 @@ pub fn decode_number(buffer: &mut Buffer, pattern: u8) -> RpResult<Value> {
             let val = unsafe { mem::transmute::<[u8; 4], i32>(*data) };
             Ok(Value::from(i32::from_le(val)))
         }
+        TYPE_U64 => {
+            let data: &mut [u8; 8] = &mut [0, 0, 0, 0, 0, 0, 0, 0];
+            try_read!(buffer.read(data), data.len());
+            let val = unsafe { mem::transmute::<[u8; 8], u64>(*data) };
+            Ok(Value::from(u64::from_le(val)))
+        }
+        TYPE_I64 => {
+            let data: &mut [u8; 8] = &mut [0, 0, 0, 0, 0, 0, 0, 0];
+            try_read!(buffer.read(data), data.len());
+            let val = unsafe { mem::transmute::<[u8; 8], i64>(*data) };
+            Ok(Value::from(i64::from_le(val)))
+        }
         TYPE_FLOAT => {
             let data: &mut [u8; 4] = &mut [0, 0, 0, 0];
             try_read!(buffer.read(data), data.len());
             let val = unsafe { mem::transmute::<[u8; 4], i32>(*data) };
             Ok(Value::from(val as f32 / 1000.0))
+        }
+        TYPE_DOUBLE => {
+            let data: &mut [u8; 8] = &mut [0, 0, 0, 0, 0, 0, 0, 0];
+            try_read!(buffer.read(data), data.len());
+            let val = unsafe { mem::transmute::<[u8; 8], i64>(*data) };
+            Ok(Value::from(val as f64 / 1000000.0))
         }
         _ => {
             unreachable!("not other numbers");

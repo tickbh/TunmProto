@@ -15,11 +15,12 @@ pub const TYPE_I32: u8 = 6;
 pub const TYPE_U64: u8 = 7;
 pub const TYPE_I64: u8 = 8;
 pub const TYPE_FLOAT: u8 = 9;
-pub const TYPE_STR: u8 = 10;
-pub const TYPE_STR_IDX: u8 = 11;
-pub const TYPE_RAW: u8 = 12;
-pub const TYPE_ARR: u8 = 13;
-pub const TYPE_MAP: u8 = 14;
+pub const TYPE_DOUBLE: u8 = 10;
+pub const TYPE_STR: u8 = 11;
+pub const TYPE_STR_IDX: u8 = 12;
+pub const TYPE_RAW: u8 = 13;
+pub const TYPE_ARR: u8 = 14;
+pub const TYPE_MAP: u8 = 15;
 
 pub const STR_TYPE_NIL: &'static str = "nil";
 pub const STR_TYPE_U8: &'static str = "u8";
@@ -31,6 +32,7 @@ pub const STR_TYPE_I32: &'static str = "i32";
 pub const STR_TYPE_U64: &'static str = "u64";
 pub const STR_TYPE_I64: &'static str = "i64";
 pub const STR_TYPE_FLOAT: &'static str = "float";
+pub const STR_TYPE_DOUBLE: &'static str = "double";
 pub const STR_TYPE_STR: &'static str = "str";
 pub const STR_TYPE_STR_IDX: &'static str = "str_idx";
 pub const STR_TYPE_RAW: &'static str = "raw";
@@ -49,6 +51,7 @@ pub enum Value {
     U64(u64),
     I64(i64),
     Float(f32),
+    Double(f64),
     Str(String),
     Raw(Vec<u8>),
     Arr(Vec<Value>),
@@ -78,6 +81,7 @@ impl fmt::Debug for Value {
             Value::U64(val) => write!(fmt, "u64({:?})", val),
             Value::I64(val) => write!(fmt, "i64({:?})", val),
             Value::Float(val) => write!(fmt, "float({:?})", val),
+            Value::Double(val) => write!(fmt, "double({:?})", val),
             Value::Str(ref val) => write!(fmt, "str({:?})", val),
             Value::Raw(ref val) => write!(fmt, "str({:?})", val),
             Value::Arr(ref val) => write!(fmt, "arr({:?})", val),
@@ -137,6 +141,12 @@ impl From<i64> for Value {
 impl From<f32> for Value {
     fn from(val: f32) -> Value {
         Value::Float(val)
+    }
+}
+
+impl From<f64> for Value {
+    fn from(val: f64) -> Value {
+        Value::Double(val)
     }
 }
 
@@ -218,10 +228,39 @@ impl Into<i32> for Value {
     }
 }
 
+
+impl Into<u64> for Value {
+    fn into(self) -> u64 {
+        match self {
+            Value::U64(val) => val,
+            _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
+        }
+    }
+}
+
+impl Into<i64> for Value {
+    fn into(self) -> i64 {
+        match self {
+            Value::I64(val) => val,
+            _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
+        }
+    }
+}
+
+
 impl Into<f32> for Value {
     fn into(self) -> f32 {
         match self {
             Value::Float(val) => val,
+            _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
+        }
+    }
+}
+
+impl Into<f64> for Value {
+    fn into(self) -> f64 {
+        match self {
+            Value::Double(val) => val,
             _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
@@ -272,7 +311,10 @@ pub fn get_type_by_value(value: &Value) -> u8 {
         Value::I16(_) => TYPE_I16,
         Value::U32(_) => TYPE_U32,
         Value::I32(_) => TYPE_I32,
+        Value::U64(_) => TYPE_U64,
+        Value::I64(_) => TYPE_I64,
         Value::Float(_) => TYPE_FLOAT,
+        Value::Double(_) => TYPE_DOUBLE,
         Value::Str(_) => TYPE_STR,
         Value::Raw(_) => TYPE_RAW,
         Value::Arr(_) => TYPE_ARR,
@@ -290,7 +332,10 @@ pub fn get_type_by_name(name: &str) -> u8 {
         STR_TYPE_I16 => TYPE_I16,
         STR_TYPE_U32 => TYPE_U32,
         STR_TYPE_I32 => TYPE_I32,
+        STR_TYPE_U64 => TYPE_U64,
+        STR_TYPE_I64 => TYPE_I64,
         STR_TYPE_FLOAT => TYPE_FLOAT,
+        STR_TYPE_DOUBLE => TYPE_DOUBLE,
         STR_TYPE_STR => TYPE_STR,
         STR_TYPE_RAW => TYPE_RAW,
         STR_TYPE_ARR => TYPE_ARR,
@@ -308,7 +353,10 @@ pub fn get_name_by_type(index: u8) -> &'static str {
         TYPE_I16 => STR_TYPE_I16,
         TYPE_U32 => STR_TYPE_U32,
         TYPE_I32 => STR_TYPE_I32,
+        TYPE_U64 => STR_TYPE_U64,
+        TYPE_I64 => STR_TYPE_I64,
         TYPE_FLOAT => STR_TYPE_FLOAT,
+        TYPE_DOUBLE => STR_TYPE_DOUBLE,
         TYPE_STR => STR_TYPE_STR,
         TYPE_RAW => STR_TYPE_RAW,
         TYPE_ARR => STR_TYPE_ARR,
