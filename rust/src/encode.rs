@@ -42,6 +42,12 @@ pub fn encode_number(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
         Value::I32(val) => {
             buffer.write(unsafe { &mem::transmute::<i32, [u8; 4]>(val.to_le()) })?;
         }
+        Value::U64(val) => {
+            buffer.write(unsafe { &mem::transmute::<u64, [u8; 8]>(val.to_le()) })?;
+        }
+        Value::I64(val) => {
+            buffer.write(unsafe { &mem::transmute::<i64, [u8; 8]>(val.to_le()) })?;
+        }
         Value::Float(val) => {
             let val = (val * 1000.0) as i32;
             buffer.write(unsafe { &mem::transmute::<i32, [u8; 4]>(val.to_le()) })?;
@@ -95,6 +101,8 @@ pub fn encode_field(buffer: &mut Buffer, config: &mut StrConfig, value: &Value) 
         | Value::I16(_)
         | Value::U32(_)
         | Value::I32(_)
+        | Value::U64(_)
+        | Value::I64(_)
         | Value::Float(_) => {
             encode_type(buffer, value)?;
             encode_number(buffer, value)?;

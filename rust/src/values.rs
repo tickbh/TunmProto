@@ -12,12 +12,14 @@ pub const TYPE_U16: u8 = 3;
 pub const TYPE_I16: u8 = 4;
 pub const TYPE_U32: u8 = 5;
 pub const TYPE_I32: u8 = 6;
-pub const TYPE_FLOAT: u8 = 7;
-pub const TYPE_STR: u8 = 8;
-pub const TYPE_STR_IDX: u8 = 9;
-pub const TYPE_RAW: u8 = 10;
-pub const TYPE_ARR: u8 = 11;
-pub const TYPE_MAP: u8 = 12;
+pub const TYPE_U64: u8 = 7;
+pub const TYPE_I64: u8 = 8;
+pub const TYPE_FLOAT: u8 = 9;
+pub const TYPE_STR: u8 = 10;
+pub const TYPE_STR_IDX: u8 = 11;
+pub const TYPE_RAW: u8 = 12;
+pub const TYPE_ARR: u8 = 13;
+pub const TYPE_MAP: u8 = 14;
 
 pub const STR_TYPE_NIL: &'static str = "nil";
 pub const STR_TYPE_U8: &'static str = "u8";
@@ -26,6 +28,8 @@ pub const STR_TYPE_U16: &'static str = "u16";
 pub const STR_TYPE_I16: &'static str = "i16";
 pub const STR_TYPE_U32: &'static str = "u32";
 pub const STR_TYPE_I32: &'static str = "i32";
+pub const STR_TYPE_U64: &'static str = "u64";
+pub const STR_TYPE_I64: &'static str = "i64";
 pub const STR_TYPE_FLOAT: &'static str = "float";
 pub const STR_TYPE_STR: &'static str = "str";
 pub const STR_TYPE_STR_IDX: &'static str = "str_idx";
@@ -42,6 +46,8 @@ pub enum Value {
     I16(i16),
     U32(u32),
     I32(i32),
+    U64(u64),
+    I64(i64),
     Float(f32),
     Str(String),
     Raw(Vec<u8>),
@@ -69,6 +75,8 @@ impl fmt::Debug for Value {
             Value::I16(val) => write!(fmt, "i16({:?})", val),
             Value::U32(val) => write!(fmt, "u32({:?})", val),
             Value::I32(val) => write!(fmt, "i32({:?})", val),
+            Value::U64(val) => write!(fmt, "u64({:?})", val),
+            Value::I64(val) => write!(fmt, "i64({:?})", val),
             Value::Float(val) => write!(fmt, "float({:?})", val),
             Value::Str(ref val) => write!(fmt, "str({:?})", val),
             Value::Raw(ref val) => write!(fmt, "str({:?})", val),
