@@ -122,6 +122,18 @@ impl From<i32> for Value {
     }
 }
 
+impl From<u64> for Value {
+    fn from(val: u64) -> Value {
+        Value::U64(val)
+    }
+}
+
+impl From<i64> for Value {
+    fn from(val: i64) -> Value {
+        Value::I64(val)
+    }
+}
+
 impl From<f32> for Value {
     fn from(val: f32) -> Value {
         Value::Float(val)
