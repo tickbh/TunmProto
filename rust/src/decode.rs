@@ -205,7 +205,7 @@ pub fn decode_field(buffer: &mut Buffer) -> RpResult<Value> {
 }
 
 pub fn decode_proto(buffer: &mut Buffer) -> RpResult<(String, Vec<Value>)> {
-    let str_len: u16 = decode_number(buffer, TYPE_U16)?.into();
+    let str_len: u16 = decode_varint(buffer)?.into();
     for _ in 0..str_len {
         let value = decode_str_raw(buffer, TYPE_STR)?.into();
         buffer.add_str(value);

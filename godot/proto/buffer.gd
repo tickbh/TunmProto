@@ -17,6 +17,9 @@ func add_str(value: String):
 func get_str(idx):
     return str_arr[idx]
 
+func reset_rpos():
+    rpos = 0
+
 func read_bytes(read_len : int) -> PoolByteArray:
     var arr: PoolByteArray = PoolByteArray()
     var left = wpos - rpos;
@@ -24,7 +27,7 @@ func read_bytes(read_len : int) -> PoolByteArray:
         return arr
     if read_len > left:
         read_len = left
-    arr.append_array(bytes.subarray(rpos, rpos+read_len))
+    arr.append_array(bytes.subarray(rpos, rpos+read_len - 1))
     return arr
 
 func read_byte():
@@ -33,6 +36,11 @@ func read_byte():
     if len(reads) == 0:
         return 0
     return reads[0]
+    
+func write_byte(b: int):
+    bytes.append(b)
+    self.wpos += 1
+    return 1
 
 func write(arr: PoolByteArray):
     var size = arr.size()

@@ -218,7 +218,7 @@ pub fn encode_proto(buffer: &mut Buffer, name: &String, infos: Vec<Value>) -> Rp
     encode_str_raw(&mut sub_buffer, &Value::Str(name.clone()))?;
     encode_field(&mut sub_buffer, &Value::from(infos))?;
 
-    encode_number(buffer, &Value::U16(sub_buffer.str_arr.len() as u16))?;
+    encode_varint(buffer, &Value::U16(sub_buffer.str_arr.len() as u16))?;
     for v in &sub_buffer.str_arr {
         encode_str_raw(buffer, &Value::Str(v.to_string()))?;
     }
