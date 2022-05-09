@@ -215,9 +215,9 @@ pub fn encode_field(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
 
 pub fn encode_proto(buffer: &mut Buffer, name: &String, infos: Vec<Value>) -> RpResult<()> {
     let mut sub_buffer = Buffer::new();
-    encode_str_raw(&mut sub_buffer, &Value::Str(name.clone()))?;
     encode_field(&mut sub_buffer, &Value::from(infos))?;
 
+    encode_str_raw(buffer, &Value::Str(name.clone()))?;
     encode_varint(buffer, &Value::U16(sub_buffer.str_arr.len() as u16))?;
     for v in &sub_buffer.str_arr {
         encode_str_raw(buffer, &Value::Str(v.to_string()))?;

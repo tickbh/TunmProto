@@ -54,4 +54,3 @@ func write(arr: PoolByteArray):
 	self.wpos += size
 	return size
 
-# export(Buffer) var buffer

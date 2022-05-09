@@ -276,28 +276,11 @@ class PBPacker:
 			
 	static func decode_proto(buffer: Buffer):
 		var str_len = decode_varint(buffer)
-		print("decode_proto str_len === ", str_len)
 		for __ in range(str_len):
 			var value = decode_str_raw(buffer, RT_DATA_TYPE.TYPE_STR);
 			buffer.add_str(value);
 
 		var name = decode_str_raw(buffer, RT_DATA_TYPE.TYPE_STR);
-		print("name = {}", name);
 
 		var sub_value = decode_field(buffer);
 		return [name, sub_value];
-
-
-	static func fuck():
-		print("111")
-		var buffer = Buffer.new()
-		buffer.read_byte()
-
-		print(typeof(2))
-		print(typeof("2"))
-
-
-func _init():
-	var buffer = Buffer.Buffer.new()
-	buffer.read_byte()
-	print("aa")
