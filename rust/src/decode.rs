@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::io::Read;
 use std::mem;
 
-use crate::TYPE_STR_IDX;
+use crate::{TYPE_STR_IDX, TYPE_VARINT};
 
 use super::{StrConfig, Value, Buffer, RpResult, ErrorKind};
 use super::{TYPE_NIL, TYPE_BOOL, TYPE_U8, TYPE_I8, TYPE_U16, TYPE_I16, TYPE_U32, TYPE_I32, TYPE_U64, TYPE_I64, TYPE_FLOAT, TYPE_DOUBLE, TYPE_STR,
@@ -76,6 +76,9 @@ pub fn decode_number(buffer: &mut Buffer, pattern: u8) -> RpResult<Value> {
             let val = unsafe { mem::transmute::<[u8; 8], i64>(*data) };
             Ok(Value::from(i64::from_le(val)))
         }
+        TYPE_VARINT => {
+            decode_varint(buffer)
+        }
         TYPE_FLOAT => {
             let data: &mut [u8; 4] = &mut [0, 0, 0, 0];
             try_read!(buffer.read(data), data.len());
@@ -94,10 +97,36 @@ pub fn decode_number(buffer: &mut Buffer, pattern: u8) -> RpResult<Value> {
     }
 }
 
+pub fn decode_varint(buffer: &mut Buffer) -> RpResult<Value> {
+    let data: &mut [u8; 1] = &mut [0];
+    let mut real = 0u64;
+    let mut shl_num = 0;
+    loop {
+        try_read!(buffer.read(data), data.len());
+        let read = (data[0] & 0x7F) as u64;
+        if let Some(sread) = read.checked_shl(shl_num) {
+            real += sread;
+        } else {
+            fail!((ErrorKind::ParseError, "too big varint"));
+        }
+        shl_num += 7;
+        if (data[0] & 0x80) == 0 {
+            break;
+        }
+    }
+    let is_left = real % 2 == 1;
+    let val = if is_left {
+        - ((real / 2) as i64) - 1
+    } else {
+        (real / 2) as i64
+    };
+    Ok(Value::Varint(val))
+}
+
 pub fn decode_str_raw(buffer: &mut Buffer, pattern: u8) -> RpResult<Value> {
     match pattern {
         TYPE_STR => {
-            let len: u16 = decode_number(buffer, TYPE_U16)?.into();
+            let len: u16 = decode_varint(buffer)?.into();
             if len == 0 {
                 return Ok(Value::from(String::new()));
             }
@@ -110,7 +139,7 @@ pub fn decode_str_raw(buffer: &mut Buffer, pattern: u8) -> RpResult<Value> {
             Ok(Value::from(val.ok().unwrap()))
         }
         TYPE_RAW => {
-            let len: u16 = decode_number(buffer, TYPE_U16)?.into();
+            let len: u16 = decode_varint(buffer)?.into();
             if len == 0 {
                 return Ok(Value::from(Vec::<u8>::new()))
             }
@@ -126,7 +155,7 @@ pub fn decode_str_raw(buffer: &mut Buffer, pattern: u8) -> RpResult<Value> {
 
 pub fn decode_map(buffer: &mut Buffer, config: &StrConfig) -> RpResult<Value> {
     let mut map = HashMap::<Value, Value>::new();
-    let arr_len: u16 = decode_number(buffer, TYPE_U16)?.into();
+    let arr_len: u16 = decode_varint(buffer)?.into();
     for _ in 0 .. arr_len {
         let key = decode_field(buffer, config)?;
         let sub_value = decode_field(buffer, config)?;
@@ -137,7 +166,7 @@ pub fn decode_map(buffer: &mut Buffer, config: &StrConfig) -> RpResult<Value> {
 
 pub fn decode_arr(buffer: &mut Buffer, config: &StrConfig) -> RpResult<Value> {
     let mut arr = Vec::<Value>::new();
-    let arr_len: u16 = decode_number(buffer, TYPE_U16)?.into();
+    let arr_len: u16 = decode_varint(buffer)?.into();
     for _ in 0 .. arr_len {
         let sub_value = decode_field(buffer, config)?;
         arr.push(sub_value);
@@ -153,11 +182,14 @@ fn decode_by_pattern(buffer: &mut Buffer, config: &StrConfig, pattern: &u8) -> R
         TYPE_U8 | TYPE_I8 | TYPE_U16 | TYPE_I16 | TYPE_U32 | TYPE_I32 | TYPE_FLOAT => {
             decode_number(buffer, *pattern)
         }
+        TYPE_VARINT => {
+            decode_varint(buffer)
+        }
         TYPE_STR | TYPE_RAW => decode_str_raw(buffer, *pattern),
         TYPE_MAP => decode_map(buffer, &config),
         TYPE_ARR => decode_arr(buffer, &config),
         TYPE_STR_IDX => {
-            let idx: u16 = decode_number(buffer, TYPE_U16)?.into();
+            let idx: u16 = decode_varint(buffer)?.into();
             Ok(Value::from(config.get_str(idx)?))
         },
         // TYPE_AMAP => decode_array!(decode_field(buffer, config), Value::AMap, Value::Map),

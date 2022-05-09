@@ -43,26 +43,26 @@ fn test_encode_u8() {
 }
 
 #[test]
-fn test_encode_u16() {
+fn test_encode_16() {
     let mut config = StrConfig::new();
     let mut buffer = Buffer::new();
-    let value = Value::U16(0x1234 as u16);
-    td_rp::encode_field(&mut buffer, &mut config, &value).unwrap();
-    td_rp::encode_field(&mut buffer, &mut config, &value).unwrap();
+    
+    //-1
+    td_rp::encode_field(&mut buffer, &mut config, &Value::I16(-1 as i16)).unwrap(); 
+    td_rp::encode_field(&mut buffer, &mut config, &Value::U16(0x1234 as u16)).unwrap();
 
     // first read field
-    test_head_field(&mut buffer, td_rp::TYPE_U16);
+    test_head_field(&mut buffer, td_rp::TYPE_VARINT);
     // after index type is data
-    let data: &mut [u8; 2] = &mut [0, 0];
+    let data: &mut [u8; 1] = &mut [0];
     let size = buffer.read(data).unwrap();
-    assert_eq!(size, 2);
-    assert_eq!(data[0], 0x34);
-    assert_eq!(data[1], 0x12);
+    assert_eq!(size, 1);
+    assert_eq!(data[0], 0x01);
 
     // second read field
     let read = td_rp::decode_field(&mut buffer, &config).unwrap();
     match read {
-        Value::U16(val) => assert_eq!(val, 0x1234),
+        Value::Varint(val) => assert_eq!(val, 0x1234),
         _ => unreachable!("it will not read"),
     }
     let size = buffer.read(data).unwrap();
@@ -74,25 +74,13 @@ fn test_encode_u16() {
 fn test_encode_u32() {
     let mut config = StrConfig::new();
     let mut buffer = Buffer::new();
-    let value = Value::U32(0x12345678 as u32);
-    td_rp::encode_field(&mut buffer, &mut config, &value).unwrap();
-    td_rp::encode_field(&mut buffer, &mut config, &value).unwrap();
-
-    // first read field
-    test_head_field(&mut buffer, td_rp::TYPE_U32);
-    // after index type is data
     let data: &mut [u8; 4] = &mut [0, 0, 0, 0];
-    let size = buffer.read(data).unwrap();
-    assert_eq!(size, 4);
-    assert_eq!(data[0], 0x78);
-    assert_eq!(data[1], 0x56);
-    assert_eq!(data[2], 0x34);
-    assert_eq!(data[3], 0x12);
+    td_rp::encode_field(&mut buffer, &mut config, &Value::U32(0x12345678 as u32)).unwrap();
 
     // second read field
     let read = td_rp::decode_field(&mut buffer, &config).unwrap();
     match read {
-        Value::U32(val) => assert_eq!(val, 0x12345678),
+        Value::Varint(val) => assert_eq!(val, 0x12345678),
         _ => unreachable!("it will not read"),
     }
     let size = buffer.read(data).unwrap();
@@ -105,22 +93,13 @@ fn test_encode_float() {
     let mut config = StrConfig::new();
     let mut buffer = Buffer::new();
     let value = Value::Float(12345.123);
-    td_rp::encode_field(&mut buffer, &mut config, &value).unwrap();
+    let data: &mut [u8; 4] = &mut [0, 0, 0, 0];
     td_rp::encode_field(&mut buffer, &mut config, &value).unwrap();
 
-    // first read field
-    test_head_field(&mut buffer, td_rp::TYPE_FLOAT);
-    // after index type is data
-    let data: &mut [u8; 4] = &mut [0, 0, 0, 0];
-    let size = buffer.read(data).unwrap();
-    assert_eq!(size, 4);
-    let val = u32::from_le(unsafe { mem::transmute::<[u8;4], u32>(*data) });
-    let val = val as f32 / 1000.0;
-    assert_eq!(val, 12345.123);
     // second read field
     let read = td_rp::decode_field(&mut buffer, &config).unwrap();
     match read {
-        Value::Float(val) => assert_eq!(val, 12345.123),
+        Value::Varint(val) => assert_eq!(val, 12345123),
         _ => unreachable!("it will not read"),
     }
     let size = buffer.read(data).unwrap();
@@ -141,8 +120,8 @@ fn test_encode_str() {
     // first read field
     test_head_field(&mut buffer, td_rp::TYPE_STR);
 
-    let len = match td_rp::decode_number(&mut buffer, td_rp::TYPE_U16).unwrap() {
-        Value::U16(val) => val,
+    let len = match td_rp::decode_varint(&mut buffer).unwrap() {
+        Value::Varint(val) => val,
         _ => panic!("error"),
     };
     let mut rv = vec![0; len as usize];

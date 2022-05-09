@@ -15,13 +15,14 @@ pub const TYPE_U32: u8 = 6;
 pub const TYPE_I32: u8 = 7;
 pub const TYPE_U64: u8 = 8;
 pub const TYPE_I64: u8 = 9;
-pub const TYPE_FLOAT: u8 = 10;
-pub const TYPE_DOUBLE: u8 = 11;
-pub const TYPE_STR: u8 = 12;
-pub const TYPE_STR_IDX: u8 = 13;
-pub const TYPE_RAW: u8 = 14;
-pub const TYPE_ARR: u8 = 15;
-pub const TYPE_MAP: u8 = 16;
+pub const TYPE_VARINT: u8 = 10;
+pub const TYPE_FLOAT: u8 = 11;
+pub const TYPE_DOUBLE: u8 = 12;
+pub const TYPE_STR: u8 = 13;
+pub const TYPE_STR_IDX: u8 = 14;
+pub const TYPE_RAW: u8 = 15;
+pub const TYPE_ARR: u8 = 16;
+pub const TYPE_MAP: u8 = 17;
 
 pub const STR_TYPE_NIL: &'static str = "nil";
 pub const STR_TYPE_BOOL: &'static str = "bool";
@@ -33,6 +34,7 @@ pub const STR_TYPE_U32: &'static str = "u32";
 pub const STR_TYPE_I32: &'static str = "i32";
 pub const STR_TYPE_U64: &'static str = "u64";
 pub const STR_TYPE_I64: &'static str = "i64";
+pub const STR_TYPE_VARINT: &'static str = "varint";
 pub const STR_TYPE_FLOAT: &'static str = "float";
 pub const STR_TYPE_DOUBLE: &'static str = "double";
 pub const STR_TYPE_STR: &'static str = "str";
@@ -41,7 +43,7 @@ pub const STR_TYPE_RAW: &'static str = "raw";
 pub const STR_TYPE_ARR: &'static str = "arr";
 pub const STR_TYPE_MAP: &'static str = "map";
 
-#[derive(PartialEq, Clone)]
+#[derive(Clone)]
 pub enum Value {
     Nil,
     Bool(bool),
@@ -53,12 +55,56 @@ pub enum Value {
     I32(i32),
     U64(u64),
     I64(i64),
+    Varint(i64),
     Float(f32),
     Double(f64),
     Str(String),
     Raw(Vec<u8>),
     Arr(Vec<Value>),
     Map(HashMap<Value, Value>),
+}
+
+impl PartialEq for Value {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Bool(l0), Self::Bool(r0)) => l0 == r0,
+            (Self::U8(l0), Self::U8(r0)) => l0 == r0,
+            (Self::I8(l0), Self::I8(r0)) => l0 == r0,
+            (Self::U16(l0), Self::U16(r0)) => l0 == r0,
+            (Self::I16(l0), Self::I16(r0)) => l0 == r0,
+            (Self::U32(l0), Self::U32(r0)) => l0 == r0,
+            (Self::I32(l0), Self::I32(r0)) => l0 == r0,
+            (Self::U64(l0), Self::U64(r0)) => l0 == r0,
+            (Self::I64(l0), Self::I64(r0)) => l0 == r0,
+            (Self::Varint(l0), Self::Varint(r0)) => l0 == r0,
+
+            (Self::Varint(l0), Self::U8(r0)) => l0 == &(*r0 as i64),
+            (Self::Varint(l0), Self::I8(r0)) => l0 == &(*r0 as i64),
+            (Self::Varint(l0), Self::U16(r0)) => l0 == &(*r0 as i64),
+            (Self::Varint(l0), Self::I16(r0)) => l0 == &(*r0 as i64),
+            (Self::Varint(l0), Self::U32(r0)) => l0 == &(*r0 as i64),
+            (Self::Varint(l0), Self::I32(r0)) => l0 == &(*r0 as i64),
+            (Self::Varint(l0), Self::U64(r0)) => l0 == &(*r0 as i64),
+            (Self::Varint(l0), Self::I64(r0)) => l0 == &(*r0 as i64),
+
+            (Self::U8(r0), Self::Varint(l0)) => l0 == &(*r0 as i64),
+            (Self::I8(r0), Self::Varint(l0)) => l0 == &(*r0 as i64),
+            (Self::U16(r0), Self::Varint(l0)) => l0 == &(*r0 as i64),
+            (Self::I16(r0), Self::Varint(l0)) => l0 == &(*r0 as i64),
+            (Self::U32(r0), Self::Varint(l0)) => l0 == &(*r0 as i64),
+            (Self::I32(r0), Self::Varint(l0)) => l0 == &(*r0 as i64),
+            (Self::U64(r0), Self::Varint(l0)) => l0 == &(*r0 as i64),
+            (Self::I64(r0), Self::Varint(l0)) => l0 == &(*r0 as i64),
+
+            (Self::Float(l0), Self::Float(r0)) => l0 == r0,
+            (Self::Double(l0), Self::Double(r0)) => l0 == r0,
+            (Self::Str(l0), Self::Str(r0)) => l0 == r0,
+            (Self::Raw(l0), Self::Raw(r0)) => l0 == r0,
+            (Self::Arr(l0), Self::Arr(r0)) => l0 == r0,
+            (Self::Map(l0), Self::Map(r0)) => l0 == r0,
+            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+        }
+    }
 }
 
 impl Eq for Value {
@@ -84,6 +130,7 @@ impl fmt::Debug for Value {
             Value::I32(val) => write!(fmt, "i32({:?})", val),
             Value::U64(val) => write!(fmt, "u64({:?})", val),
             Value::I64(val) => write!(fmt, "i64({:?})", val),
+            Value::Varint(val) => write!(fmt, "varint({:?})", val),
             Value::Float(val) => write!(fmt, "float({:?})", val),
             Value::Double(val) => write!(fmt, "double({:?})", val),
             Value::Str(ref val) => write!(fmt, "str({:?})", val),
@@ -188,6 +235,9 @@ impl Into<bool> for Value {
     fn into(self) -> bool {
         match self {
             Value::Bool(val) => val,
+            Value::U8(val) => val != 0,
+            Value::I8(val) => val != 0,
+            Value::Varint(val) => val != 0,
             _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
@@ -197,6 +247,7 @@ impl Into<u8> for Value {
     fn into(self) -> u8 {
         match self {
             Value::U8(val) => val,
+            Value::Varint(val) => val as u8,
             _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
@@ -206,6 +257,7 @@ impl Into<i8> for Value {
     fn into(self) -> i8 {
         match self {
             Value::I8(val) => val,
+            Value::Varint(val) => val as i8,
             _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
@@ -215,6 +267,7 @@ impl Into<u16> for Value {
     fn into(self) -> u16 {
         match self {
             Value::U16(val) => val,
+            Value::Varint(val) => val as u16,
             _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
@@ -224,6 +277,7 @@ impl Into<i16> for Value {
     fn into(self) -> i16 {
         match self {
             Value::I16(val) => val,
+            Value::Varint(val) => val as i16,
             _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
@@ -233,6 +287,7 @@ impl Into<u32> for Value {
     fn into(self) -> u32 {
         match self {
             Value::U32(val) => val,
+            Value::Varint(val) => val as u32,
             _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
@@ -242,6 +297,7 @@ impl Into<i32> for Value {
     fn into(self) -> i32 {
         match self {
             Value::I32(val) => val,
+            Value::Varint(val) => val as i32,
             _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
@@ -252,6 +308,7 @@ impl Into<u64> for Value {
     fn into(self) -> u64 {
         match self {
             Value::U64(val) => val,
+            Value::Varint(val) => val as u64,
             _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
@@ -261,6 +318,7 @@ impl Into<i64> for Value {
     fn into(self) -> i64 {
         match self {
             Value::I64(val) => val,
+            Value::Varint(val) => val as i64,
             _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
@@ -271,6 +329,7 @@ impl Into<f32> for Value {
     fn into(self) -> f32 {
         match self {
             Value::Float(val) => val,
+            Value::Varint(val) => (val as f32  / 1000.0),
             _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
@@ -280,6 +339,7 @@ impl Into<f64> for Value {
     fn into(self) -> f64 {
         match self {
             Value::Double(val) => val,
+            Value::Varint(val) => (val as f64  / 1000000.0),
             _ => panic!("into error type {}", get_name_by_type(get_type_by_value(&self))),
         }
     }
@@ -333,6 +393,7 @@ pub fn get_type_by_value(value: &Value) -> u8 {
         Value::I32(_) => TYPE_I32,
         Value::U64(_) => TYPE_U64,
         Value::I64(_) => TYPE_I64,
+        Value::Varint(_) => TYPE_VARINT,
         Value::Float(_) => TYPE_FLOAT,
         Value::Double(_) => TYPE_DOUBLE,
         Value::Str(_) => TYPE_STR,
@@ -355,6 +416,7 @@ pub fn get_type_by_name(name: &str) -> u8 {
         STR_TYPE_I32 => TYPE_I32,
         STR_TYPE_U64 => TYPE_U64,
         STR_TYPE_I64 => TYPE_I64,
+        STR_TYPE_VARINT => TYPE_VARINT,
         STR_TYPE_FLOAT => TYPE_FLOAT,
         STR_TYPE_DOUBLE => TYPE_DOUBLE,
         STR_TYPE_STR => TYPE_STR,
@@ -377,6 +439,7 @@ pub fn get_name_by_type(index: u8) -> &'static str {
         TYPE_I32 => STR_TYPE_I32,
         TYPE_U64 => STR_TYPE_U64,
         TYPE_I64 => STR_TYPE_I64,
+        TYPE_VARINT => STR_TYPE_VARINT,
         TYPE_FLOAT => STR_TYPE_FLOAT,
         TYPE_DOUBLE => STR_TYPE_DOUBLE,
         TYPE_STR => STR_TYPE_STR,

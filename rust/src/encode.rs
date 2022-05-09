@@ -1,7 +1,7 @@
 use std::io::Write;
 use std::mem;
 
-use crate::{get_type_by_value, Buffer, RpResult, StrConfig, Value, TYPE_STR_IDX};
+use crate::{get_type_by_value, Buffer, RpResult, StrConfig, Value, TYPE_STR_IDX, TYPE_VARINT};
 
 fn append_and_align(buffer: &mut Buffer, val: &[u8]) -> RpResult<()> {
     let _add = match val.len() % 2 {
@@ -71,21 +71,80 @@ pub fn encode_number(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     Ok(())
 }
 
+
+pub fn encode_varint(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
+    let val = match *value {
+        Value::U8(val) => {
+            val as i64
+        }
+        Value::I8(val) => {
+            val as i64
+        }
+        Value::U16(val) => {
+            val as i64
+        }
+        Value::I16(val) => {
+            val as i64
+        }
+        Value::U32(val) => {
+            val as i64
+        }
+        Value::I32(val) => {
+            val as i64
+        }
+        Value::U64(val) => {
+            val as i64
+        }
+        Value::I64(val) => {
+            val as i64
+        }
+        Value::Varint(val) => {
+            val as i64
+        }
+        Value::Float(val) => {
+            let val = (val * 1000.0) as i32;
+            val as i64
+        }
+        Value::Double(val) => {
+            let val = (val * 1000000.0) as i64;
+            val as i64
+        }
+        _ => unreachable!("encode_number only"),
+    };
+    let mut real = if val < 0 { 
+        (-(val + 1)) as u64 * 2 + 1
+    } else { 
+        (val as u64) * 2
+    };
+    loop {
+        println!("real = {} ======{}", real, (real & 0x7F) as u8);
+        let data = (real & 0x7F) as u8;
+        real = real >> 7;
+        if real == 0 {
+            buffer.write(&[data])?;
+            break;
+        } else {
+            buffer.write(&[data | 0x80])?;
+        }
+    }
+    Ok(())
+}
+
 pub fn encode_str_idx(buffer: &mut Buffer, config: &mut StrConfig, pattern: &str) -> RpResult<()> {
     let idx = config.add_str(pattern.to_string());
     encode_sure_type(buffer, TYPE_STR_IDX)?;
-    encode_number(buffer, &Value::U16(idx))?;
+    encode_varint(buffer, &Value::U16(idx))?;
     Ok(())
 }
 
 pub fn encode_str_raw(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     match *value {
         Value::Str(ref val) => {
-            encode_number(buffer, &Value::U16(val.len() as u16))?;
+            encode_varint(buffer, &Value::U16(val.len() as u16))?;
             append_and_align(buffer, &val.as_bytes()[..])?;
         }
         Value::Raw(ref val) => {
-            encode_number(buffer, &Value::U16(val.len() as u16))?;
+            encode_varint(buffer, &Value::U16(val.len() as u16))?;
             append_and_align(buffer, &val[..])?;
         }
         _ => unreachable!("encode_str_raw only"),
@@ -96,7 +155,7 @@ pub fn encode_str_raw(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
 pub fn encode_map(buffer: &mut Buffer, config: &mut StrConfig, value: &Value) -> RpResult<()> {
     match *value {
         Value::Map(ref val) => {
-            encode_number(buffer, &Value::from(val.len() as u16))?;
+            encode_varint(buffer, &Value::from(val.len() as u16))?;
             for (name, sub_value) in val {
                 encode_field(buffer, config, name)?;
                 encode_field(buffer, config, sub_value)?;
@@ -114,17 +173,21 @@ pub fn encode_field(buffer: &mut Buffer, config: &mut StrConfig, value: &Value) 
             encode_bool(buffer, value)?;
         }
         Value::U8(_)
-        | Value::I8(_)
-        | Value::U16(_)
+        | Value::I8(_) => {
+            encode_type(buffer, value)?;
+            encode_number(buffer, value)?;
+        }
+        Value::U16(_)
         | Value::I16(_)
         | Value::U32(_)
         | Value::I32(_)
         | Value::U64(_)
         | Value::I64(_)
+        | Value::Varint(_)
         | Value::Float(_)
         | Value::Double(_) => {
-            encode_type(buffer, value)?;
-            encode_number(buffer, value)?;
+            encode_sure_type(buffer, TYPE_VARINT)?;
+            encode_varint(buffer, value)?;
         }
         Value::Str(ref pattern) => {
             encode_str_idx(buffer, config, pattern)?;
@@ -135,7 +198,7 @@ pub fn encode_field(buffer: &mut Buffer, config: &mut StrConfig, value: &Value) 
         }
         Value::Arr(ref val) => {
             encode_type(buffer, value)?;
-            encode_number(buffer, &Value::from(val.len() as u16))?;
+            encode_varint(buffer, &Value::from(val.len() as u16))?;
             for v in val {
                 encode_field(buffer, config, v)?;
             }
