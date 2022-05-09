@@ -10,18 +10,19 @@ enum RT_DATA_TYPE {
     TYPE_I32 = 7,
     TYPE_U64 = 8,
     TYPE_I64 = 9,
-    TYPE_FLOAT = 10,
-    TYPE_DOUBLE = 11,
-    TYPE_STR = 12,
-    TYPE_STR_IDX = 13,
-    TYPE_RAW = 14,
-    TYPE_ARR = 15,
-    TYPE_MAP = 16,
+    TYPE_VARINT = 10,
+    TYPE_FLOAT = 11,
+    TYPE_DOUBLE = 12,
+    TYPE_STR = 13,
+    TYPE_STR_IDX = 14,
+    TYPE_RAW = 15,
+    TYPE_ARR = 16,
+    TYPE_MAP = 17,
 }
-
 
 class PBPacker:
     static func convert_signed(n : int) -> int:
+        # var b = Buffer.Buffer.new();
         if n < -2147483648:
             return (n << 1) ^ (n >> 63)
         else:
@@ -91,3 +92,19 @@ class PBPacker:
             if i != 0:
                 value <<= 7
         return value
+        
+    static func encode_proto(buffer: Buffer, name: String, infos: Array):
+        var sub_buffer = Buffer.new()
+        
+        pass
+
+    static func fuck():
+        print("111")
+        var buffer = Buffer.new()
+        buffer.read_byte()
+
+
+func _init():
+    var buffer = Buffer.Buffer.new()
+    buffer.read_byte()
+    print("aa")

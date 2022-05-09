@@ -3,10 +3,13 @@ use std::ptr;
 use std::fmt;
 use std::cmp;
 
+use crate::{ErrorKind, RpResult};
+
 pub struct Buffer {
     val: Vec<u8>,
     rpos: usize,
     wpos: usize,
+    pub str_arr: Vec<String>,
 }
 
 impl Buffer {
@@ -15,7 +18,26 @@ impl Buffer {
             val: Vec::new(),
             rpos: 0,
             wpos: 0,
+            str_arr: Vec::new(),
         }
+    }
+    
+    pub fn add_str(&mut self, value: String) -> u16 {
+        if self.str_arr.contains(&value) {
+            self.str_arr.iter().position(|x| x == &value).unwrap() as u16
+        } else {
+            self.str_arr.push(value);
+            self.str_arr.len() as u16 - 1
+        }
+    }
+    
+    pub fn get_str(&self, idx: u16) -> RpResult<String> {
+        if idx as usize >= self.str_arr.len() {
+            fail!((ErrorKind::BufferOverMaxError, "must left space to read "));
+        } else {
+            Ok(self.str_arr[idx as usize].clone())
+        }
+        
     }
 
     pub fn get_data(&self) -> &Vec<u8> {

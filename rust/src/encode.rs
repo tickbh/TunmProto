@@ -1,7 +1,7 @@
 use std::io::Write;
 use std::mem;
 
-use crate::{get_type_by_value, Buffer, RpResult, StrConfig, Value, TYPE_STR_IDX, TYPE_VARINT};
+use crate::{get_type_by_value, Buffer, RpResult, Value, TYPE_STR_IDX, TYPE_VARINT};
 
 fn append_and_align(buffer: &mut Buffer, val: &[u8]) -> RpResult<()> {
     let _add = match val.len() % 2 {
@@ -117,7 +117,6 @@ pub fn encode_varint(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
         (val as u64) * 2
     };
     loop {
-        println!("real = {} ======{}", real, (real & 0x7F) as u8);
         let data = (real & 0x7F) as u8;
         real = real >> 7;
         if real == 0 {
@@ -130,8 +129,8 @@ pub fn encode_varint(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     Ok(())
 }
 
-pub fn encode_str_idx(buffer: &mut Buffer, config: &mut StrConfig, pattern: &str) -> RpResult<()> {
-    let idx = config.add_str(pattern.to_string());
+pub fn encode_str_idx(buffer: &mut Buffer, pattern: &str) -> RpResult<()> {
+    let idx = buffer.add_str(pattern.to_string());
     encode_sure_type(buffer, TYPE_STR_IDX)?;
     encode_varint(buffer, &Value::U16(idx))?;
     Ok(())
@@ -152,13 +151,13 @@ pub fn encode_str_raw(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     Ok(())
 }
 
-pub fn encode_map(buffer: &mut Buffer, config: &mut StrConfig, value: &Value) -> RpResult<()> {
+pub fn encode_map(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     match *value {
         Value::Map(ref val) => {
             encode_varint(buffer, &Value::from(val.len() as u16))?;
             for (name, sub_value) in val {
-                encode_field(buffer, config, name)?;
-                encode_field(buffer, config, sub_value)?;
+                encode_field(buffer, name)?;
+                encode_field(buffer, sub_value)?;
             }
         }
         _ => unreachable!("encode_map only"),
@@ -166,7 +165,7 @@ pub fn encode_map(buffer: &mut Buffer, config: &mut StrConfig, value: &Value) ->
     Ok(())
 }
 
-pub fn encode_field(buffer: &mut Buffer, config: &mut StrConfig, value: &Value) -> RpResult<()> {
+pub fn encode_field(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     match &*value {
         Value::Bool(_) => {
             encode_type(buffer, value)?;
@@ -190,7 +189,7 @@ pub fn encode_field(buffer: &mut Buffer, config: &mut StrConfig, value: &Value) 
             encode_varint(buffer, value)?;
         }
         Value::Str(ref pattern) => {
-            encode_str_idx(buffer, config, pattern)?;
+            encode_str_idx(buffer, pattern)?;
         }
         Value::Raw(_) => {
             encode_type(buffer, value)?;
@@ -200,12 +199,12 @@ pub fn encode_field(buffer: &mut Buffer, config: &mut StrConfig, value: &Value) 
             encode_type(buffer, value)?;
             encode_varint(buffer, &Value::from(val.len() as u16))?;
             for v in val {
-                encode_field(buffer, config, v)?;
+                encode_field(buffer, v)?;
             }
         }
         Value::Map(_) => {
             encode_type(buffer, value)?;
-            encode_map(buffer, config, value)?;
+            encode_map(buffer, value)?;
         }
         Value::Nil => {
             encode_type(buffer, value)?;
@@ -215,15 +214,13 @@ pub fn encode_field(buffer: &mut Buffer, config: &mut StrConfig, value: &Value) 
 }
 
 pub fn encode_proto(buffer: &mut Buffer, name: &String, infos: Vec<Value>) -> RpResult<()> {
-    let mut config = StrConfig::new();
-
     let mut sub_buffer = Buffer::new();
     encode_str_raw(&mut sub_buffer, &Value::Str(name.clone()))?;
-    encode_field(&mut sub_buffer, &mut config, &Value::from(infos))?;
+    encode_field(&mut sub_buffer, &Value::from(infos))?;
 
-    encode_number(buffer, &Value::U16(config.str_arr.len() as u16))?;
-    for v in config.str_arr {
-        encode_str_raw(buffer, &Value::Str(v))?;
+    encode_number(buffer, &Value::U16(sub_buffer.str_arr.len() as u16))?;
+    for v in &sub_buffer.str_arr {
+        encode_str_raw(buffer, &Value::Str(v.to_string()))?;
     }
     buffer.extend(&sub_buffer)?;
     Ok(())
