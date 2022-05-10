@@ -2126,6 +2126,7 @@ ByteBufferPrototype.add_str = function(str) {
         return idx
     } else {
         this.str_arr.push(str)
+        return this.str_arr.length - 1
     }
 };
 

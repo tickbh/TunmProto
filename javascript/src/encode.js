@@ -114,7 +114,7 @@ function encode_arr(buffer, value) {
 }
 
 function encode_map(buffer, value) {
-    encode_varint(buffer, value.length)
+    encode_varint(buffer, Object.keys(value).length)
     for(var k in value) {
         encode_field(buffer, k)
         encode_field(buffer, value[k])
@@ -123,9 +123,9 @@ function encode_map(buffer, value) {
 
 function encode_field(buffer, value) {
     var pattern = get_type_by_ref(value)
-    encode_type(buffer, pattern);
     switch(pattern) {
     case TYPE_BOOL:
+        encode_type(buffer, pattern);
         encode_bool(buffer, value)
         break
     case TYPE_U8:
@@ -137,15 +137,18 @@ function encode_field(buffer, value) {
     case TYPE_I64:
     case TYPE_U64:
     case TYPE_VARINT: {
+        encode_type(buffer, TYPE_VARINT);
         encode_varint(buffer, value)
     }
     break;
     case TYPE_FLOAT: {
+        encode_type(buffer, pattern);
         value = parseInt(value * 1000)
         encode_varint(buffer, value)
     }
     break;
     case TYPE_DOUBLE: {
+        encode_type(buffer, pattern);
         value = parseInt(value * 1000000)
         encode_varint(buffer, value)
     }
@@ -155,14 +158,17 @@ function encode_field(buffer, value) {
     }
     break;
     case TYPE_RAW: {
+        encode_type(buffer, pattern);
         encode_str_raw(buffer, value)
     }
     break;
     case TYPE_ARR: {
+        encode_type(buffer, pattern);
         encode_arr(buffer, value)
     }
     break;
     case TYPE_MAP: {
+        encode_type(buffer, pattern);
         encode_map(buffer, value)
     }
     break;
@@ -182,6 +188,8 @@ function encode_proto(buffer, name, infos) {
         encode_str_raw(buffer, sub_buffer.str_arr[val], TYPE_STR)
     }
 
+    sub_buffer.mark(0)
+    sub_buffer.reset()
     buffer.append(sub_buffer)
     return true
 }

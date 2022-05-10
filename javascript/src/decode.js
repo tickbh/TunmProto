@@ -13,12 +13,12 @@ function decode_varint(buffer) {
         if((data & 0x80) == 0) {
             break
         }
-        var is_left = real % 2 == 1
-        if (is_left) {
-            return -parseInt(real / 2) - 1
-        } else {
-            return parseInt(real / 2)
-        }
+    }
+    var is_left = real % 2 == 1
+    if (is_left) {
+        return -parseInt(real / 2) - 1
+    } else {
+        return parseInt(real / 2)
     }
 }
 
@@ -96,51 +96,6 @@ function read_field(buffer) {
     }
 }
 
-function decode_by_field(buffer, config, field) {
-    // var name = get_type_by_name(field.pattern)
-    var t = field.pattern
-    switch(t) {
-    case TYPE_U8:
-    case TYPE_I8:
-    case TYPE_U16:
-    case TYPE_I16:
-    case TYPE_U32:
-    case TYPE_I32:
-    case TYPE_FLOAT: {
-        return decode_number(buffer, t)
-    }
-    case TYPE_STR:
-    case TYPE_RAW: {
-        return decode_str_raw(buffer, t)
-    }
-    case TYPE_MAP: {
-        return decode_map(buffer, config)
-    }
-    case TYPE_AU8:
-    case TYPE_AI8:
-    case TYPE_AU16:
-    case TYPE_AI16:
-    case TYPE_AU32:
-    case TYPE_AI32:
-    case TYPE_AFLOAT: 
-    case TYPE_ASTR:
-    case TYPE_ARAW:
-    case TYPE_AMAP: {
-        var list = []
-        while(true) {
-            var sub_value = decode_field(buffer, config)
-            if(sub_value.pattern == TYPE_NIL) {
-                break;
-            }
-            list.push(rt_into_value(sub_value))
-        }
-        return {pattern: t, list: list}
-    } 
-    default: 
-        return new_type_nil();
-    }
-}
-
 function decode_field(buffer) {
     var pattern = decode_type(buffer)
     if(pattern == TYPE_NIL) {
@@ -161,7 +116,7 @@ function decode_field(buffer) {
         case TYPE_I32:
         case TYPE_U64:
         case TYPE_I64:
-            return decode_number(buffer, pattern)
+            return decode_varint(buffer, pattern)
         case TYPE_FLOAT: {
             var val = decode_varint(buffer)
             return val / 1000
@@ -191,7 +146,7 @@ function decode_arr(buffer) {
     var arr = []
     for(var idx = 0; idx < size; idx++) {
         var sub = decode_field(buffer)
-        arr.append(sub)
+        arr.push(sub)
     }
     return arr
 }
@@ -216,6 +171,6 @@ function decode_proto(buffer, config) {
     }
     
     var sub_value = decode_field(buffer);
-    return [name, sub_value];
+    return {proto: name, list: sub_value};
 }
 
