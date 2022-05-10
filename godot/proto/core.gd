@@ -123,7 +123,35 @@ class PBPacker:
 		
 	static func decode_type(buffer: Buffer) -> int:
 		return buffer.read_byte()
-		
+
+	static func encode_number(buffer: Buffer, value: int, pattern: int):
+		match pattern:
+			RT_DATA_TYPE.TYPE_U8, RT_DATA_TYPE.TYPE_I8:
+				buffer.write_byte(value & 0xFF) 
+			RT_DATA_TYPE.TYPE_U16, RT_DATA_TYPE.TYPE_I16:
+				buffer.write_byte(value & 0xFF)
+				buffer.write_byte(value & 0xFF00)
+			RT_DATA_TYPE.TYPE_U32, RT_DATA_TYPE.TYPE_I32:
+				buffer.write_byte(value & 0x000000FF)
+				buffer.write_byte(value & 0x0000FF00)
+				buffer.write_byte(value & 0x00FF0000)
+				buffer.write_byte(value & 0xFF000000)
+			_:
+				print("encode_number no spport type ", pattern)
+				
+	static func decode_number(buffer: Buffer, pattern: int):
+		match pattern:
+			RT_DATA_TYPE.TYPE_U8, RT_DATA_TYPE.TYPE_I8:
+				return buffer.read_byte()
+			RT_DATA_TYPE.TYPE_U16, RT_DATA_TYPE.TYPE_I16:
+				var bytes = buffer.read_bytes(2)
+				return bytes[0] + bytes[1] << 8
+			RT_DATA_TYPE.TYPE_U32, RT_DATA_TYPE.TYPE_I32:
+				var bytes = buffer.read_bytes(4)
+				return bytes[0] + bytes[1] << 8 + bytes[2] << 16 + bytes[3] << 24
+			_:
+				print("decode_number no spport type ", pattern)
+
 	static func encode_varint(buffer: Buffer, value: int):
 		var real = value * 2
 		if value < 0:
@@ -262,11 +290,9 @@ class PBPacker:
 
 	static func encode_proto(buffer: Buffer, name: String, infos: Array):
 		var sub_buffer = Buffer.new()
-		encode_str_raw(sub_buffer, name);
 		encode_field(sub_buffer, infos)
 
-		print("len(sub_buffer.str_arr) === ", len(sub_buffer.str_arr))
-
+		encode_str_raw(buffer, name);
 		encode_varint(buffer, len(sub_buffer.str_arr))
 		for v in sub_buffer.str_arr:
 			encode_str_raw(buffer, v)
@@ -275,12 +301,12 @@ class PBPacker:
 
 			
 	static func decode_proto(buffer: Buffer):
+		var name = decode_str_raw(buffer, RT_DATA_TYPE.TYPE_STR);
 		var str_len = decode_varint(buffer)
 		for __ in range(str_len):
 			var value = decode_str_raw(buffer, RT_DATA_TYPE.TYPE_STR);
 			buffer.add_str(value);
 
-		var name = decode_str_raw(buffer, RT_DATA_TYPE.TYPE_STR);
 
 		var sub_value = decode_field(buffer);
 		return [name, sub_value];

@@ -13,9 +13,15 @@ _global_script_classes=[ {
 "class": "Buffer",
 "language": "GDScript",
 "path": "res://proto/buffer.gd"
+}, {
+"base": "Reference",
+"class": "NetMsg",
+"language": "GDScript",
+"path": "res://netmsg.gd"
 } ]
 _global_script_class_icons={
-"Buffer": ""
+"Buffer": "",
+"NetMsg": ""
 }
 
 [application]

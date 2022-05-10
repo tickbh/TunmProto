@@ -19,8 +19,20 @@ func get_str(idx):
 		return ""
 	return str_arr[idx]
 
+func size():
+	return wpos - rpos
+
 func reset_rpos():
 	rpos = 0
+	
+func set_rpos(pos):
+	rpos = pos
+	
+func set_wpos(pos):
+	wpos = pos
+	
+func get_all_bytes() -> PoolByteArray:
+	return bytes.subarray(rpos, wpos)
 
 func read_bytes(read_len : int) -> PoolByteArray:
 	var arr: PoolByteArray = PoolByteArray()
@@ -44,7 +56,7 @@ func read_byte():
 	return reads[0]
 	
 func write_byte(b: int):
-	bytes.append(b)
+	bytes.append(b & 0xFF)
 	self.wpos += 1
 	return 1
 
