@@ -126,7 +126,7 @@ ByteBuffer.DEFAULT_CAPACITY = 16;
  * @type {boolean}
  * @expose
  */
-ByteBuffer.DEFAULT_ENDIAN = ByteBuffer.BIG_ENDIAN;
+ByteBuffer.DEFAULT_ENDIAN = ByteBuffer.LITTLE_ENDIAN;
 
 /**
  * Default no assertions flag of `false`.

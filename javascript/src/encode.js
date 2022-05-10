@@ -32,12 +32,12 @@ function encode_bool(buffer, value) {
     }
 }
 
-function encode_number(buffer, value) {
-    var number = parseInt(value.number)
-    if(!value.pattern || IsNull(number)) {
+function encode_number(buffer, value, pattern) {
+    var number = parseInt(value)
+    if(IsNull(number)) {
         throw new Error("unkown encode number")
     }
-    switch(value.pattern) {
+    switch(pattern) {
     case TYPE_U8: {
         buffer.writeUint8(number)
         break;
@@ -69,11 +69,11 @@ function encode_number(buffer, value) {
         throw new Error("no support u64")
     }
     case TYPE_FLOAT: {
-        buffer.writeInt32(parseInt(parseFloat(value.number) * 1000))
+        buffer.writeInt32(parseInt(parseFloat(number) * 1000))
         break;
     }
     case TYPE_DOUBLE: {
-        buffer.writeInt32(parseInt(parseFloat(value.number) * 1000000))
+        buffer.writeInt32(parseInt(parseFloat(number) * 1000000))
         break;
     }
     default: {
