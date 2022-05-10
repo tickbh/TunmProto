@@ -81,6 +81,8 @@ var WsNetwork  = (function(){
 
                     setHeartTimer()
 
+                    self.sendMessage("cmd_internal_auth", "aaa", "bb")
+
                     self.sendMessage("cmd_login", {"user": 222})
                 };
             },
