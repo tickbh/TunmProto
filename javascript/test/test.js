@@ -1,8 +1,9 @@
+var rt = new RtProto()
 
 function test_manual_field(buffer, index, t) {
-    var type = decode_type(buffer)
+    var type = rt.decode_type(buffer)
     console.assert(type==t, "field type no match");
-    var idx = decode_varint(buffer)
+    var idx = rt.decode_varint(buffer)
     console.assert(idx==index, "value no match");
 }
 
@@ -10,14 +11,14 @@ function test_encode_u8() {
     console.log("test_encode_u8")
     var buffer = new ByteBuffer();
 
-    encode_field(buffer, 3)
-    encode_field(buffer, 3)
+    rt.encode_field(buffer, 3)
+    rt.encode_field(buffer, 3)
 
     buffer.mark(0)
     buffer.reset()
     test_manual_field(buffer, 3, TYPE_VARINT)
 
-    var number = decode_field(buffer)
+    var number = rt.decode_field(buffer)
     console.assert(number == 3, "Number Not Match");
 
     var a = document.createElement('a');
