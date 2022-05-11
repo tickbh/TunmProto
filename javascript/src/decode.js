@@ -6,8 +6,6 @@ function decode_varint(buffer) {
     var shl_num = 0
     while (true) {
         var data = buffer.readUint8()
-        print("data = ", data)
-        print("shl_num = ", shl_num)
         real += (data & 0x7F) << shl_num
         shl_num += 7
         if((data & 0x80) == 0) {

@@ -36,10 +36,33 @@ var WsNetwork  = (function(){
                   
                 this.socket.onmessage = function(evt){  
                     console.log("socket onmessage")
-                    var data = evt.data;  
-                    if(self.callback) {
-                        self.callback("onmessage", evt)
-                    }
+                    
+                    var data = evt.data;
+                    data.arrayBuffer().then(function(value) {
+                        var buffer = new ByteBuffer();
+                        buffer.append(new Uint8Array(value))
+                        buffer.mark(0)
+                        buffer.reset()
+                        var success = decode_proto(buffer)
+                        if(!success) {
+                            console.log("decode  failed!!!!")
+                            return
+                        }
+
+                        if(success.proto == "msg_enter_game") {
+                            var server = success.list[0]["server"]
+                            self.sendMessage("cmd_enter_server", server)
+                            self.to_svr_type = server["code_type"]
+                            self.to_svr_id = server["code_id"]
+                        }
+    
+                        console.log("succcess === ", success)
+    
+                        if(self.callback) {
+                            self.callback("onmessage", evt)
+                        }
+                    })
+                    
                 };  
                   
                 this.socket.onerror = function(evt){  
@@ -79,7 +102,7 @@ var WsNetwork  = (function(){
                             self.sendMessage("cmd_check_heart", {})
                             self.to_svr_type = temp
                             setHeartTimer()
-                        }, 6000)
+                        }, 10000)
                     }
 
                     setHeartTimer()
@@ -88,7 +111,7 @@ var WsNetwork  = (function(){
 
                     self.sendMessage("cmd_internal_auth", "aaa", "bb")
                     self.sendMessage("cmd_agent_identity", 0, 1)
-                    self.sendMessage("cmd_login", {"account": "my", "password": "password", "version": '1.0', "server_id": "1", "device_id": 111, "timestamp": parseInt(new Date().getTime() / 1000) })
+                    self.sendMessage("cmd_login", {"account": "my", "password": "password", "version": '1.0', "server_id": "1", "device_id": "111", "timestamp": parseInt(new Date().getTime() / 1000) })
                 };
             },
             isConnect: function() {
