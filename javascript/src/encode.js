@@ -10,7 +10,7 @@ function encode_varint(buffer, value) {
 
     while(true) {
         var data = (real & 0x7F)
-        real = real >> 7
+        real = real >>> 7
         if( real == 0) {
             buffer.writeUint8(data)
             break

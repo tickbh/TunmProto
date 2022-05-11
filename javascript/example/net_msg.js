@@ -1,6 +1,6 @@
 //Network.js  
 var WebSocket = WebSocket || window.WebSocket || window.MozWebSocket;  
-  
+
 var WsNetwork  = (function(){  
     var instance = null;
 
@@ -74,16 +74,21 @@ var WsNetwork  = (function(){
                         }
                         self.heartTime = setTimeout(function () {
                             self.heartTime = null
-                            self.sendMessage(CMD_CHECK_HEART, {})
+                            var temp = self.to_svr_type
+                            self.to_svr_type = 1
+                            self.sendMessage("cmd_check_heart", {})
+                            self.to_svr_type = temp
                             setHeartTimer()
-                        }, 60000)
+                        }, 6000)
                     }
 
                     setHeartTimer()
 
-                    self.sendMessage("cmd_internal_auth", "aaa", "bb")
+                    self.to_svr_type = 1
 
-                    self.sendMessage("cmd_login", {"user": 222})
+                    self.sendMessage("cmd_internal_auth", "aaa", "bb")
+                    self.sendMessage("cmd_agent_identity", 0, 1)
+                    self.sendMessage("cmd_login", {"account": "my", "password": "password", "version": '1.0', "server_id": "1", "device_id": 111, "timestamp": parseInt(new Date().getTime() / 1000) })
                 };
             },
             isConnect: function() {
@@ -130,6 +135,8 @@ var WsNetwork  = (function(){
                     console.log("encode ", name, " failed!!!!")
                     return
                 }
+
+                this.seq_id = (this.seq_id + 111) & 0xFFFF;
 
                 var final_buffer = new ByteBuffer()
                 final_buffer.writeUint32(24 + buffer.offset)
