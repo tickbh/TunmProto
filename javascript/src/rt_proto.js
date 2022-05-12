@@ -30,32 +30,32 @@ RtProtoPrototype.decode_type = function (buffer) {
 
 RtProtoPrototype.decode_number = function (buffer, pattern) {
     switch(pattern) {
-    case TYPE_U8: {
-        td_check_unvaild(buffer, 1);
+    case this.TYPE_U8: {
+        this.td_check_unvaild(buffer, 1);
         return buffer.readUint8()
     }
-    case TYPE_I8: {
-        td_check_unvaild(buffer, 1);
+    case this.TYPE_I8: {
+        this.td_check_unvaild(buffer, 1);
         return buffer.readInt8()
     }
-    case TYPE_U16: {
-        td_check_unvaild(buffer, 2);
+    case this.TYPE_U16: {
+        this.td_check_unvaild(buffer, 2);
         return buffer.readUint16()
     }
-    case TYPE_I16: {
-        td_check_unvaild(buffer, 2);
+    case this.TYPE_I16: {
+        this.td_check_unvaild(buffer, 2);
         return buffer.readInt16()
     }
-    case TYPE_U32: {
-        td_check_unvaild(buffer, 4);
+    case this.TYPE_U32: {
+        this.td_check_unvaild(buffer, 4);
         return buffer.readUint32()
     }
-    case TYPE_I32: {
-        td_check_unvaild(buffer, 4);
+    case this.TYPE_I32: {
+        this.td_check_unvaild(buffer, 4);
         return buffer.readInt32()
     }
-    case TYPE_FLOAT: {
-        td_check_unvaild(buffer, 4);
+    case this.TYPE_FLOAT: {
+        this.td_check_unvaild(buffer, 4);
         return buffer.readInt32() / 1000.0
     }
     default:
@@ -65,21 +65,21 @@ RtProtoPrototype.decode_number = function (buffer, pattern) {
 
 RtProtoPrototype.decode_str_raw = function (buffer, pattern) {
     switch(pattern) {
-    case TYPE_STR: {
-        // if(td_check_unvaild(buffer, 2)) throw new Error("not vaild size");
-        var length = decode_varint(buffer, TYPE_U16)
+    case this.TYPE_STR: {
+        // if(this.td_check_unvaild(buffer, 2)) throw new Error("not vaild size");
+        var length = this.decode_varint(buffer, this.TYPE_U16)
         if(length == 0) {
             return ""
         }
-        if(td_check_unvaild(buffer, length)) throw new Error("not vaild size");
+        if(this.td_check_unvaild(buffer, length)) throw new Error("not vaild size");
         return buffer.readUTF8String(length)
     }
-    case TYPE_RAW: {
-        var length = decode_varint(buffer, TYPE_U16)
+    case this.TYPE_RAW: {
+        var length = this.decode_varint(buffer, this.TYPE_U16)
         if(length == 0) {
             return ""
         }
-        if(td_check_unvaild(buffer, length)) throw new Error("not vaild size");
+        if(this.td_check_unvaild(buffer, length)) throw new Error("not vaild size");
         return buffer.readUTF8String(length)
     }
     default:
@@ -88,9 +88,9 @@ RtProtoPrototype.decode_str_raw = function (buffer, pattern) {
 }
 
 RtProtoPrototype.read_field = function (buffer) {
-    td_check_unvaild(buffer, 4);
-    var index = decode_number(buffer, TYPE_U16)
-    var pattern = decode_number(buffer, TYPE_U16)
+    this.td_check_unvaild(buffer, 4);
+    var index = this.decode_number(buffer, this.TYPE_U16)
+    var pattern = this.decode_number(buffer, this.TYPE_U16)
     return {
         index: index.number,
         pattern: pattern.number,
@@ -98,80 +98,80 @@ RtProtoPrototype.read_field = function (buffer) {
 }
 
 RtProtoPrototype.decode_field = function (buffer) {
-    var pattern = decode_type(buffer)
-    if(pattern == TYPE_NIL) {
+    var pattern = this.decode_type(buffer)
+    if(pattern == this.TYPE_NIL) {
         return undefined;
     }
     switch(pattern) {
-        case TYPE_BOOL:
+        case this.TYPE_BOOL:
             if (buffer.readInt8() != 0) {
                 return true
             } else {
                 return false
             }
-        case TYPE_U8:
-        case TYPE_I8:
-        case TYPE_U16:
-        case TYPE_I16:
-        case TYPE_U32:
-        case TYPE_I32:
-        case TYPE_U64:
-        case TYPE_I64:
-            return decode_varint(buffer, pattern)
-        case TYPE_FLOAT: {
-            var val = decode_varint(buffer)
+        case this.TYPE_U8:
+        case this.TYPE_I8:
+        case this.TYPE_U16:
+        case this.TYPE_I16:
+        case this.TYPE_U32:
+        case this.TYPE_I32:
+        case this.TYPE_U64:
+        case this.TYPE_I64:
+            return this.decode_varint(buffer, pattern)
+        case this.TYPE_FLOAT: {
+            var val = this.decode_varint(buffer)
             return val / 1000
         }
-        case TYPE_DOUBLE: {
-            var val = decode_varint(buffer)
+        case this.TYPE_DOUBLE: {
+            var val = this.decode_varint(buffer)
             return val / 1000000
         }
-        case TYPE_VARINT:
-            return decode_varint(buffer)
-        case TYPE_STR_IDX:
-            var idx = decode_varint(buffer)
+        case this.TYPE_VARINT:
+            return this.decode_varint(buffer)
+        case this.TYPE_STR_IDX:
+            var idx = this.decode_varint(buffer)
             return buffer.get_str(idx)
-        case TYPE_STR:
-            return decode_str_raw(buffer, TYPE_STR)
-        case TYPE_ARR:
-            return decode_arr(buffer)
-        case TYPE_MAP:
-            return decode_map(buffer)
+        case this.TYPE_STR:
+            return this.decode_str_raw(buffer, this.TYPE_STR)
+        case this.TYPE_ARR:
+            return this.decode_arr(buffer)
+        case this.TYPE_MAP:
+            return this.decode_map(buffer)
         default:
             throw new Error("unknow type")
     }
 }
 
 RtProtoPrototype.decode_arr = function (buffer) {
-    var size = decode_varint(buffer)
+    var size = this.decode_varint(buffer)
     var arr = []
     for(var idx = 0; idx < size; idx++) {
-        var sub = decode_field(buffer)
+        var sub = this.decode_field(buffer)
         arr.push(sub)
     }
     return arr
 }
 
 RtProtoPrototype.decode_map = function (buffer, config) {
-    var size = decode_varint(buffer)
+    var size = this.decode_varint(buffer)
     var map = {}
     for(var idx = 0; idx < size; idx++) {
-        var key = decode_field(buffer)
-        var val = decode_field(buffer)
+        var key = this.decode_field(buffer)
+        var val = this.decode_field(buffer)
         map[key] = val
     }
     return map
 }
 
 RtProtoPrototype.decode_proto = function (buffer, config) {
-    var name = decode_str_raw(buffer, TYPE_STR)
-    var str_len = decode_varint(buffer)
+    var name = this.decode_str_raw(buffer, this.TYPE_STR)
+    var str_len = this.decode_varint(buffer)
     for(var i = 0; i < str_len; i++) {
-        var value = decode_str_raw(buffer, TYPE_STR);
+        var value = this.decode_str_raw(buffer, this.TYPE_STR);
         buffer.add_str(value);
     }
     
-    var sub_value = decode_field(buffer);
+    var sub_value = this.decode_field(buffer);
     return {proto: name, list: sub_value};
 }
 
@@ -182,7 +182,7 @@ RtProtoPrototype.td_check_vaild = function (buffer, size) {
 }
 
 RtProtoPrototype.td_check_unvaild = function (buffer, size) {
-    if(!td_check_vaild(buffer, size)) {
+    if(!this.td_check_vaild(buffer, size)) {
         throw new Error("now vaild buffer size")
     }
     return false
@@ -195,32 +195,32 @@ RtProtoPrototype.IsNull = function(value) {
 RtProtoPrototype.get_type_by_ref = function (value) {
     var type = typeof(value)
     if (type == "boolean") {
-        return TYPE_BOOL
+        return this.TYPE_BOOL
     } else if(type == 'string') {
-        return TYPE_STR
+        return this.TYPE_STR
     } else if(type == "number") {
         var step = value - Math.floor(value)
         if(step < 0.001) {
-            return TYPE_I64
+            return this.TYPE_I64
         } else {
-            return TYPE_FLOAT
+            return this.TYPE_FLOAT
         }
     } else if(type == "object") {
         if(value instanceof String) {
-            return TYPE_STR
+            return this.TYPE_STR
         } else if(value instanceof Array) {
-            return TYPE_ARR
+            return this.TYPE_ARR
         } else {
-            return TYPE_MAP
+            return this.TYPE_MAP
         }
     }
-    return TYPE_NIL
+    return this.TYPE_NIL
 }
 
 
 RtProtoPrototype.encode_varint = function (buffer, value) {
     var number = parseInt(value) 
-    if(IsNull(number)) {
+    if(this.IsNull(number)) {
         throw new Error("unkown encode number")
     }
     var real = number * 2
@@ -258,41 +258,41 @@ RtProtoPrototype.encode_number = function (buffer, value, pattern) {
         throw new Error("unkown encode number")
     }
     switch(pattern) {
-    case TYPE_U8: {
+    case this.TYPE_U8: {
         buffer.writeUint8(number)
         break;
     }
-    case TYPE_I8: {
+    case this.TYPE_I8: {
         buffer.writeInt8(number)
         break;
     }
-    case TYPE_U16: {
+    case this.TYPE_U16: {
         buffer.writeUint16(number)
         break;
     }
-    case TYPE_I16: {
+    case this.TYPE_I16: {
         buffer.writeInt16(number)
         break;
     }
-    case TYPE_U32: {
+    case this.TYPE_U32: {
         buffer.writeUint32(number)
         break;
     }
-    case TYPE_I32: {
+    case this.TYPE_I32: {
         buffer.writeInt32(number)
         break;
     }
-    case TYPE_U64: {
+    case this.TYPE_U64: {
         throw new Error("no support u64")
     }
-    case TYPE_I64: {
+    case this.TYPE_I64: {
         throw new Error("no support u64")
     }
-    case TYPE_FLOAT: {
+    case this.TYPE_FLOAT: {
         buffer.writeInt32(parseInt(parseFloat(number) * 1000))
         break;
     }
-    case TYPE_DOUBLE: {
+    case this.TYPE_DOUBLE: {
         buffer.writeInt32(parseInt(parseFloat(number) * 1000000))
         break;
     }
@@ -304,20 +304,20 @@ RtProtoPrototype.encode_number = function (buffer, value, pattern) {
 
 RtProtoPrototype.encode_str_idx = function (buffer, value) {
     var idx = buffer.add_str(value)
-    encode_type(buffer, TYPE_STR_IDX)
-    encode_varint(buffer, idx);
+    this.encode_type(buffer, this.TYPE_STR_IDX)
+    this.encode_varint(buffer, idx);
 }
 
 
 RtProtoPrototype.encode_str_raw = function (buffer, value, pattern) {
     switch(pattern) {
-        case TYPE_STR: {
-            encode_varint(buffer, value.length)
+        case this.TYPE_STR: {
+            this.encode_varint(buffer, value.length)
             buffer.writeString(value)
             break;
         }
-        case TYPE_RAW: {
-            encode_varint(buffer, value.length)
+        case this.TYPE_RAW: {
+            this.encode_varint(buffer, value.length)
             buffer.writeString(value)
             break;
         }
@@ -328,69 +328,69 @@ RtProtoPrototype.encode_str_raw = function (buffer, value, pattern) {
 }
 
 RtProtoPrototype.encode_arr = function (buffer, value) {
-    encode_varint(buffer, value.length)
+    this.encode_varint(buffer, value.length)
     for(var v in value) {
-        encode_field(buffer, value[v])
+        this.encode_field(buffer, value[v])
     }
 }
 
 RtProtoPrototype.encode_map = function (buffer, value) {
-    encode_varint(buffer, Object.keys(value).length)
+    this.encode_varint(buffer, Object.keys(value).length)
     for(var k in value) {
-        encode_field(buffer, k)
-        encode_field(buffer, value[k])
+        this.encode_field(buffer, k)
+        this.encode_field(buffer, value[k])
     }
 }
 
 RtProtoPrototype.encode_field = function (buffer, value) {
-    var pattern = get_type_by_ref(value)
+    var pattern = this.get_type_by_ref(value)
     switch(pattern) {
-    case TYPE_BOOL:
-        encode_type(buffer, pattern);
-        encode_bool(buffer, value)
+    case this.TYPE_BOOL:
+        this.encode_type(buffer, pattern);
+        this.encode_bool(buffer, value)
         break
-    case TYPE_U8:
-    case TYPE_I8:
-    case TYPE_U16:
-    case TYPE_I16:
-    case TYPE_U32:
-    case TYPE_I32:
-    case TYPE_I64:
-    case TYPE_U64:
-    case TYPE_VARINT: {
-        encode_type(buffer, TYPE_VARINT);
-        encode_varint(buffer, value)
+    case this.TYPE_U8:
+    case this.TYPE_I8:
+    case this.TYPE_U16:
+    case this.TYPE_I16:
+    case this.TYPE_U32:
+    case this.TYPE_I32:
+    case this.TYPE_I64:
+    case this.TYPE_U64:
+    case this.TYPE_VARINT: {
+        this.encode_type(buffer, this.TYPE_VARINT);
+        this.encode_varint(buffer, value)
     }
     break;
-    case TYPE_FLOAT: {
-        encode_type(buffer, pattern);
+    case this.TYPE_FLOAT: {
+        this.encode_type(buffer, pattern);
         value = parseInt(value * 1000)
-        encode_varint(buffer, value)
+        this.encode_varint(buffer, value)
     }
     break;
-    case TYPE_DOUBLE: {
-        encode_type(buffer, pattern);
+    case this.TYPE_DOUBLE: {
+        this.encode_type(buffer, pattern);
         value = parseInt(value * 1000000)
-        encode_varint(buffer, value)
+        this.encode_varint(buffer, value)
     }
     break;
-    case TYPE_STR:{
-        encode_str_idx(buffer, value)
+    case this.TYPE_STR:{
+        this.encode_str_idx(buffer, value)
     }
     break;
-    case TYPE_RAW: {
-        encode_type(buffer, pattern);
-        encode_str_raw(buffer, value)
+    case this.TYPE_RAW: {
+        this.encode_type(buffer, pattern);
+        this.encode_str_raw(buffer, value)
     }
     break;
-    case TYPE_ARR: {
-        encode_type(buffer, pattern);
-        encode_arr(buffer, value)
+    case this.TYPE_ARR: {
+        this.encode_type(buffer, pattern);
+        this.encode_arr(buffer, value)
     }
     break;
-    case TYPE_MAP: {
-        encode_type(buffer, pattern);
-        encode_map(buffer, value)
+    case this.TYPE_MAP: {
+        this.encode_type(buffer, pattern);
+        this.encode_map(buffer, value)
     }
     break;
     default:
@@ -401,12 +401,12 @@ RtProtoPrototype.encode_field = function (buffer, value) {
 
 RtProtoPrototype.encode_proto = function (buffer, name, infos) {
     var sub_buffer = new ByteBuffer();
-    encode_field(sub_buffer, infos)
+    this.encode_field(sub_buffer, infos)
 
-    encode_str_raw(buffer, name, TYPE_STR)
-    encode_varint(buffer, sub_buffer.str_arr.length)
+    this.encode_str_raw(buffer, name, this.TYPE_STR)
+    this.encode_varint(buffer, sub_buffer.str_arr.length)
     for(var val in sub_buffer.str_arr) {
-        encode_str_raw(buffer, sub_buffer.str_arr[val], TYPE_STR)
+        this.encode_str_raw(buffer, sub_buffer.str_arr[val], this.TYPE_STR)
     }
 
     sub_buffer.mark(0)
@@ -455,48 +455,48 @@ RtProtoPrototype.STR_TYPE_MAP = "map";
 
 RtProtoPrototype.get_type_by_name = function (name) {
     switch(name) {
-        case STR_TYPE_NIL: return TYPE_NIL;
-        case STR_TYPE_BOOL: return TYPE_BOOL;
-        case STR_TYPE_U8: return TYPE_U8;
-        case STR_TYPE_I8: return TYPE_I8;
-        case STR_TYPE_U16: return TYPE_U16;
-        case STR_TYPE_I16: return TYPE_I16;
-        case STR_TYPE_U32: return TYPE_U32;
-        case STR_TYPE_I32: return TYPE_I32;
-        case STR_TYPE_U64: return TYPE_U64;
-        case STR_TYPE_I64: return TYPE_I64;
-        case STR_TYPE_VARINT: return TYPE_VARINT;
-        case STR_TYPE_FLOAT: return TYPE_FLOAT;
-        case STR_TYPE_DOUBLE: return TYPE_DOUBLE;
-        case STR_TYPE_STR: return TYPE_STR;
-        case STR_TYPE_STR_IDX: return TYPE_STR_IDX;
-        case STR_TYPE_RAW: return TYPE_RAW;
-        case STR_TYPE_ARR: return TYPE_ARR;
-        case STR_TYPE_MAP: return TYPE_MAP;
-        default: return TYPE_NIL;
+        case STR_TYPE_NIL: return this.TYPE_NIL;
+        case STR_TYPE_BOOL: return this.TYPE_BOOL;
+        case STR_TYPE_U8: return this.TYPE_U8;
+        case STR_TYPE_I8: return this.TYPE_I8;
+        case STR_TYPE_U16: return this.TYPE_U16;
+        case STR_TYPE_I16: return this.TYPE_I16;
+        case STR_TYPE_U32: return this.TYPE_U32;
+        case STR_TYPE_I32: return this.TYPE_I32;
+        case STR_TYPE_U64: return this.TYPE_U64;
+        case STR_TYPE_I64: return this.TYPE_I64;
+        case STR_TYPE_VARINT: return this.TYPE_VARINT;
+        case STR_TYPE_FLOAT: return this.TYPE_FLOAT;
+        case STR_TYPE_DOUBLE: return this.TYPE_DOUBLE;
+        case STR_TYPE_STR: return this.TYPE_STR;
+        case STR_TYPE_STR_IDX: return this.TYPE_STR_IDX;
+        case STR_TYPE_RAW: return this.TYPE_RAW;
+        case STR_TYPE_ARR: return this.TYPE_ARR;
+        case STR_TYPE_MAP: return this.TYPE_MAP;
+        default: return this.TYPE_NIL;
     }
 }
 
 RtProtoPrototype.get_name_by_type = function (index) {
     switch(index) {
-        case TYPE_NIL: return STR_TYPE_NIL;
-        case TYPE_BOOL: return STR_TYPE_BOOL;
-        case TYPE_U8: return STR_TYPE_U8;
-        case TYPE_I8: return STR_TYPE_I8;
-        case TYPE_U16: return STR_TYPE_U16;
-        case TYPE_I16: return STR_TYPE_I16;
-        case TYPE_U32: return STR_TYPE_U32;
-        case TYPE_I32: return STR_TYPE_I32;
-        case TYPE_U64: return STR_TYPE_U64;
-        case TYPE_I64: return STR_TYPE_I64;
-        case TYPE_VARINT: return STR_TYPE_VARINT;
-        case TYPE_FLOAT: return STR_TYPE_FLOAT;
-        case TYPE_DOUBLE: return STR_TYPE_DOUBLE;
-        case TYPE_STR: return STR_TYPE_STR;
-        case TYPE_STR_IDX: return STR_TYPE_STR_IDX;
-        case TYPE_RAW: return STR_TYPE_RAW;
-        case TYPE_ARR: return STR_TYPE_ARR;
-        case TYPE_MAP: return STR_TYPE_MAP;
+        case this.TYPE_NIL: return STR_TYPE_NIL;
+        case this.TYPE_BOOL: return STR_TYPE_BOOL;
+        case this.TYPE_U8: return STR_TYPE_U8;
+        case this.TYPE_I8: return STR_TYPE_I8;
+        case this.TYPE_U16: return STR_TYPE_U16;
+        case this.TYPE_I16: return STR_TYPE_I16;
+        case this.TYPE_U32: return STR_TYPE_U32;
+        case this.TYPE_I32: return STR_TYPE_I32;
+        case this.TYPE_U64: return STR_TYPE_U64;
+        case this.TYPE_I64: return STR_TYPE_I64;
+        case this.TYPE_VARINT: return STR_TYPE_VARINT;
+        case this.TYPE_FLOAT: return STR_TYPE_FLOAT;
+        case this.TYPE_DOUBLE: return STR_TYPE_DOUBLE;
+        case this.TYPE_STR: return STR_TYPE_STR;
+        case this.TYPE_STR_IDX: return STR_TYPE_STR_IDX;
+        case this.TYPE_RAW: return STR_TYPE_RAW;
+        case this.TYPE_ARR: return STR_TYPE_ARR;
+        case this.TYPE_MAP: return STR_TYPE_MAP;
         default: return STR_TYPE_NIL;
     }
 }

@@ -16,7 +16,7 @@ function test_encode_u8() {
 
     buffer.mark(0)
     buffer.reset()
-    test_manual_field(buffer, 3, TYPE_VARINT)
+    test_manual_field(buffer, 3, rt.TYPE_VARINT)
 
     var number = rt.decode_field(buffer)
     console.assert(number == 3, "Number Not Match");
@@ -30,14 +30,14 @@ function test_encode_u16() {
     console.log("test_encode_u16")
     var buffer = new ByteBuffer();
 
-    encode_field(buffer, 0x1234)
-    encode_field(buffer, 0x1234)
+    rt.encode_field(buffer, 0x1234)
+    rt.encode_field(buffer, 0x1234)
 
     buffer.mark(0)
     buffer.reset()
-    test_manual_field(buffer, 0x1234, TYPE_VARINT)
+    test_manual_field(buffer, 0x1234, rt.TYPE_VARINT)
 
-    var value = decode_field(buffer)
+    var value = rt.decode_field(buffer)
     console.assert(value == 0x1234, "Number Not Match");
 
     var a = document.createElement('a');
@@ -50,14 +50,14 @@ function test_encode_u32() {
     console.log("test_encode_u32")
     var buffer = new ByteBuffer();
 
-    encode_field(buffer, 0x12345678)
-    encode_field(buffer, 0x12345678)
+    rt.encode_field(buffer, 0x12345678)
+    rt.encode_field(buffer, 0x12345678)
 
     buffer.mark(0)
     buffer.reset()
-    test_manual_field(buffer, 0x12345678, TYPE_VARINT)
+    test_manual_field(buffer, 0x12345678, rt.TYPE_VARINT)
 
-    var value = decode_field(buffer)
+    var value = rt.decode_field(buffer)
     console.assert( value == 0x12345678, "Number Not Match");
 
     var a = document.createElement('a');
@@ -72,14 +72,14 @@ function test_encode_float() {
 
     var number = 12345.123;
 
-    encode_field(buffer, number)
-    encode_field(buffer, number)
+    rt.encode_field(buffer, number)
+    rt.encode_field(buffer, number)
 
     buffer.mark(0)
     buffer.reset()
-    test_manual_field(buffer, 12345123, TYPE_FLOAT)
+    test_manual_field(buffer, 12345123, rt.TYPE_FLOAT)
 
-    var value = decode_field(buffer)
+    var value = rt.decode_field(buffer)
     console.assert(value == 12345.123, "Number Not Match");
 
     var a = document.createElement('a');
@@ -93,19 +93,19 @@ function test_encode_str() {
 
     var str = "I'm a chinese people";
 
-    encode_str_raw(buffer, str, TYPE_STR)
-    encode_field(buffer, str)
+    rt.encode_str_raw(buffer, str, rt.TYPE_STR)
+    rt.encode_field(buffer, str)
 
     buffer.mark(0)
     buffer.reset()
 
-    var length = decode_varint(buffer);
+    var length = rt.decode_varint(buffer);
     console.assert(str.length == length, "Size Must Equal length");
     var readStr = buffer.readUTF8String(length)
     console.assert(str == readStr, "UTF8 equal");
 
 
-    var value = decode_field(buffer)
+    var value = rt.decode_field(buffer)
     console.assert(value == str, "UTF8 Not Match");
 
     var a = document.createElement('a');
@@ -122,24 +122,24 @@ function test_encode_map() {
     value["sub_name"] = "tickdream"
     value["index"] = 1
 
-    encode_field(buffer, value);
+    rt.encode_field(buffer, value);
 
     buffer.mark(0)
     buffer.reset()
 
-    var read = decode_field(buffer)
+    var read = rt.decode_field(buffer)
     for(var k in value) {
         console.assert(value[k] == read[k], "Type Not Match");
     }
 
     value["undefine"] = 1
     var buffer = new ByteBuffer();
-    encode_field(buffer, value);
+    rt.encode_field(buffer, value);
 
     buffer.mark(0)
     buffer.reset()
 
-    var read = decode_field(buffer)
+    var read = rt.decode_field(buffer)
     console.assert(read["undefine"] == 1, "Type Not Match");
 
     var a = document.createElement('a');
@@ -157,12 +157,12 @@ function test_encode_array_u8() {
         value.push(i);
     }
 
-    encode_field(buffer, value)
+    rt.encode_field(buffer, value)
 
     buffer.mark(0)
     buffer.reset()
 
-    var read = decode_field(buffer)
+    var read = rt.decode_field(buffer)
     console.assert(read.length == 10, "Type Not Match");
     for(var i = 0; i < 10; i++) {
         console.assert(read[i] == i, "Type Not Match");
@@ -184,12 +184,12 @@ function test_base_proto() {
     value["sub_name"] = "tickdream"
     value["index"] = 1
 
-    encode_proto(buffer, "cmd_test_op", [value])
+    rt.encode_proto(buffer, "cmd_test_op", [value])
 
     buffer.mark(0)
     buffer.reset()
 
-    var read = decode_proto(buffer)
+    var read = rt.decode_proto(buffer)
     console.assert(read != null, "read not null")
 
     console.assert(read.proto == "cmd_test_op", "read name null")

@@ -12,6 +12,7 @@ var WsNetwork  = (function(){
             seq_id: 0,
             to_svr_type: 0,
             to_svr_id: 0,
+            rt: new RtProto(),
             callback: null, 
             initNetwork:function(url, callback){  
                 console.log('Network initSocket...', url);  
@@ -43,7 +44,7 @@ var WsNetwork  = (function(){
                         buffer.append(new Uint8Array(value))
                         buffer.mark(0)
                         buffer.reset()
-                        var success = decode_proto(buffer)
+                        var success = self.rt.decode_proto(buffer)
                         if(!success) {
                             console.log("decode  failed!!!!")
                             return
@@ -151,9 +152,9 @@ var WsNetwork  = (function(){
                 }
 
                 console.log("sendData = ", sendData)
-
+                
                 var buffer = new ByteBuffer(64, true);
-                var success = encode_proto(buffer, name, sendData)
+                var success = this.rt.encode_proto(buffer, name, sendData)
                 if(!success) {
                     console.log("encode ", name, " failed!!!!")
                     return
