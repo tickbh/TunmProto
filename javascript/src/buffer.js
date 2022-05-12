@@ -2426,3 +2426,5 @@ ByteBuffer.fromUTF8 = function(str, littleEndian, noAssert) {
     return bb;
 };
 
+
+window.ByteBuffer = ByteBuffer

@@ -193,3 +193,5 @@ var WsNetwork  = (function(){
         }  
     };  
 })();
+
+window.WsNetwork = WsNetwork
