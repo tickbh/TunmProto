@@ -1,6 +1,4 @@
 
-extern crate rustc_serialize;
-
 pub mod macros;
 pub mod values;
 pub mod buffer;

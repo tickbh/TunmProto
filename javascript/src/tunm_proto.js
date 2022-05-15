@@ -1,5 +1,5 @@
 var RtProto = function() {
-    this.is_rt_proto = true
+    this.is_tunm_proto = true
 };
 
 var RtProtoPrototype = RtProto.prototype;

@@ -1,4 +1,4 @@
-extern crate rt_proto as rt;
+extern crate tunm_proto as rt;
 use rt::{Value, Buffer};
 
 use std::collections::{HashMap};

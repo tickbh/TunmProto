@@ -1,4 +1,4 @@
-extern crate rt_proto as td_rp;
+extern crate tunm_proto as td_rp;
 use td_rp::{Value, Buffer};
 
 use std::io::prelude::*;

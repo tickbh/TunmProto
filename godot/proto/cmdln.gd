@@ -16,16 +16,16 @@ func test_varint():
 func test_str():
 	var buffer = Buffer.new()
 	var ret;
-	Core.PBPacker.encode_str_raw(buffer, "rt_proto_ok")
+	Core.PBPacker.encode_str_raw(buffer, "tunm_proto_ok")
 	buffer.reset_rpos()
 	ret = Core.PBPacker.decode_str_raw(buffer, Core.RT_DATA_TYPE.TYPE_STR)
 	print("ret", ret)
-	assert(ret == "rt_proto_ok")
+	assert(ret == "tunm_proto_ok")
 
 func test_array():
 	var buffer = Buffer.new()
 	var ret;
-	var before = ["rt_proto_ok", "aaaa"," ccccc", "cccc", "cccc", 11111]
+	var before = ["tunm_proto_ok", "aaaa"," ccccc", "cccc", "cccc", 11111]
 	Core.PBPacker.encode_arr(buffer, before)
 	buffer.reset_rpos()
 	ret = Core.PBPacker.decode_arr(buffer)
@@ -35,7 +35,7 @@ func test_array():
 func test_map():
 	var buffer = Buffer.new()
 	var ret;
-	var before = {"rt_proto_ok": 122, "aaaa":111," ccccc":{"aaa": 12}, "cccc":1111, "cccc1": 11111}
+	var before = {"tunm_proto_ok": 122, "aaaa":111," ccccc":{"aaa": 12}, "cccc":1111, "cccc1": 11111}
 	Core.PBPacker.encode_map(buffer, before)
 	buffer.reset_rpos()
 	ret = Core.PBPacker.decode_map(buffer)

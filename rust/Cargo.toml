@@ -1,11 +1,11 @@
 [package]
-name = "rt_proto"
-version = "0.1.7"
+name = "tunm_proto"
+version = "0.1.8"
 edition = "2021"
 authors = [ "tickbh <tickdream125@hotmail.com>" ]
 
-description = "rt proto for Rust"
-repository = "https://github.com/tickbh/rt_proto"
+description = "tunm proto for Rust"
+repository = "https://github.com/tickbh/TunmProto"
 readme = "README.md"
 license = "MIT/Apache-2.0"
 keywords = ["protocol", "GoogleProtocolBuffer"]
@@ -13,4 +13,3 @@ keywords = ["protocol", "GoogleProtocolBuffer"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rustc-serialize = "0.3.16"
