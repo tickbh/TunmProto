@@ -3,6 +3,7 @@ use std::mem;
 
 use crate::{get_type_by_value, Buffer, RpResult, Value, TYPE_STR_IDX, TYPE_VARINT};
 
+#[inline(always)]
 fn append_and_align(buffer: &mut Buffer, val: &[u8]) -> RpResult<()> {
     let _add = match val.len() % 2 {
         0 => 0,
@@ -12,16 +13,19 @@ fn append_and_align(buffer: &mut Buffer, val: &[u8]) -> RpResult<()> {
     Ok(())
 }
 
+#[inline(always)]
 pub fn encode_sure_type(buffer: &mut Buffer, value: u8) -> RpResult<()> {
     buffer.write(unsafe { &mem::transmute::<u8, [u8; 1]>(value as u8) })?;
     Ok(())
 }
 
+#[inline(always)]
 pub fn encode_type(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     buffer.write(unsafe { &mem::transmute::<u8, [u8; 1]>(get_type_by_value(value) as u8) })?;
     Ok(())
 }
 
+#[inline(always)]
 pub fn encode_bool(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     match *value {
         Value::Bool(val) => {
@@ -32,6 +36,7 @@ pub fn encode_bool(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     Ok(())
 }
 
+#[inline(always)]
 pub fn encode_number(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     match *value {
         Value::U8(val) => {
@@ -71,7 +76,7 @@ pub fn encode_number(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     Ok(())
 }
 
-
+#[inline(always)]
 pub fn encode_varint(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     let val = match *value {
         Value::U8(val) => {
@@ -129,6 +134,7 @@ pub fn encode_varint(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     Ok(())
 }
 
+#[inline(always)]
 pub fn encode_str_idx(buffer: &mut Buffer, pattern: &str) -> RpResult<()> {
     let idx = buffer.add_str(pattern.to_string());
     encode_sure_type(buffer, TYPE_STR_IDX)?;
@@ -136,6 +142,7 @@ pub fn encode_str_idx(buffer: &mut Buffer, pattern: &str) -> RpResult<()> {
     Ok(())
 }
 
+#[inline(always)]
 pub fn encode_str_raw(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     match *value {
         Value::Str(ref val) => {
@@ -222,6 +229,7 @@ pub fn encode_proto(buffer: &mut Buffer, name: &String, infos: Vec<Value>) -> Rp
     for v in &sub_buffer.str_arr {
         encode_str_raw(buffer, &Value::Str(v.to_string()))?;
     }
+
     buffer.extend(&sub_buffer)?;
     Ok(())
 }

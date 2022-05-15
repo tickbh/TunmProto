@@ -1,4 +1,5 @@
 use std::io::{Read, Write, Result};
+use std::collections::HashMap;
 use std::ptr;
 use std::fmt;
 use std::cmp;
@@ -10,23 +11,28 @@ pub struct Buffer {
     rpos: usize,
     wpos: usize,
     pub str_arr: Vec<String>,
+    pub str_map: HashMap<String, u16>,
 }
 
 impl Buffer {
     pub fn new() -> Buffer {
+        let mut vec = Vec::with_capacity(2048);
+        vec.resize(2048, 0);
         Buffer {
-            val: Vec::new(),
+            val: vec,
             rpos: 0,
             wpos: 0,
             str_arr: Vec::new(),
+            str_map: HashMap::new(),
         }
     }
     
     pub fn add_str(&mut self, value: String) -> u16 {
-        if self.str_arr.contains(&value) {
-            self.str_arr.iter().position(|x| x == &value).unwrap() as u16
+        if self.str_map.contains_key(&value) {
+            self.str_map[&value]
         } else {
-            self.str_arr.push(value);
+            self.str_arr.push(value.clone());
+            self.str_map.insert(value, self.str_arr.len() as u16 - 1);
             self.str_arr.len() as u16 - 1
         }
     }
@@ -108,6 +114,7 @@ impl fmt::Debug for Buffer {
 }
 
 impl Read for Buffer {
+    #[inline(always)]
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         let left = self.wpos - self.rpos;
         if left == 0 || buf.len() == 0 {
@@ -131,9 +138,10 @@ impl Read for Buffer {
 }
 
 impl Write for Buffer {
+    #[inline(always)]
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         if self.val.len() < self.wpos + buf.len() {
-            self.val.resize(self.wpos + buf.len(), 0);
+            self.val.resize((self.wpos + buf.len()) * 2, 0);
         }
         if buf.len() == 0 {
             return Ok(buf.len());
