@@ -213,7 +213,6 @@ pub fn decode_proto(buffer: &mut Buffer) -> RpResult<(String, Vec<Value>)> {
         buffer.add_str(value);
     }
 
-    println!("name = {}", name);
     let sub_value = decode_field(buffer)?;
     match sub_value {
         Value::Arr(val) => Ok((name, val)),
