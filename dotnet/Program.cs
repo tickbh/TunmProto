@@ -8,3 +8,5 @@ Console.WriteLine("obj null type = " + value.GetType().Name);
 Dictionary<Object, Object> value1 = new Dictionary<Object, Object>();
 
 Console.WriteLine("obj null type = " + value1.GetType().Name);
+byte[] ok = new byte[1];
+Console.WriteLine("obj null type = " + ok.GetType().Name);

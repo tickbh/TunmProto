@@ -5,6 +5,10 @@ namespace io.tunm {
         int rpos;
         int wpos;
 
+        public byte[] one_temp;
+        public byte[] two_temp;
+        public byte[] four_temp;
+
         public List<String> str_arr;
         Dictionary<String, int> str_map;
 
@@ -12,6 +16,10 @@ namespace io.tunm {
             this.val = new byte[2048];
             this.str_arr = new List<String>();
             this.str_map = new Dictionary<String, int>();
+
+            this.one_temp = new byte[1]{0};
+            this.two_temp = new byte[2]{0, 0};
+            this.four_temp = new byte[4]{0, 0, 0, 0};
         }
 
         public int add_str(String value) {
@@ -25,7 +33,7 @@ namespace io.tunm {
             }
         }
 
-        public String? get(int idx) {
+        public String? get_str(int idx) {
             if (idx >= this.str_arr.Count || idx < 0) {
                 return null;
             }

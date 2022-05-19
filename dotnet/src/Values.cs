@@ -20,6 +20,8 @@ namespace io.tunm {
         public const byte TYPE_ARR = 16;
         public const byte TYPE_MAP = 17;
 
+        public const Object NilObject = null;
+
         public const string STR_TYPE_NIL = "Null";
         public const string STR_TYPE_BOOL = "Boolean";
         public const string STR_TYPE_U8 = "Byte";
@@ -35,7 +37,7 @@ namespace io.tunm {
         public const string STR_TYPE_DOUBLE = "Double";
         public const string STR_TYPE_STR = "String";
         public const string STR_TYPE_STR_IDX = "StringIdx";
-        public const string STR_TYPE_RAW = "Raw";
+        public const string STR_TYPE_RAW = "Byte[]";
         public const string STR_TYPE_ARR = "List`1";
         public const string STR_TYPE_MAP = "Dictionary`2";
 

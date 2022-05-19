@@ -125,11 +125,18 @@ namespace io.tunm {
         
         public static void encode_str_raw(ref Buffer buffer, Object value) {
             switch(Values.get_type_by_value(ref value)) {
-                case Values.TYPE_STR:
+                case Values.TYPE_STR:{
                     var val = (string)value;
                     encode_varint(ref buffer, val.Length);
                     buffer.write(System.Text.Encoding.Default.GetBytes(val));
                     break;
+                }
+                case Values.TYPE_RAW:{
+                    var val = (byte[])value;
+                    encode_varint(ref buffer, val.Length);
+                    buffer.write(val);
+                    break;
+                }
                 default:
                     throw new Exception("unknow type str");
             }
