@@ -1,19 +1,7 @@
 extern crate tunm_proto as tunm;
 use tunm::{Value, Buffer};
 
-use std::io::prelude::*;
-use std::mem;
 use std::collections::{HashMap};
-
-fn test_head_field(buffer : &mut Buffer, t : u8) {
-    // first index bytes
-    let data: &mut [u8; 1] = &mut [0];
-    let size = buffer.read(data).unwrap();
-    assert_eq!(size, 1);
-    let val = u8::from_le(unsafe { mem::transmute::<[u8;1], u8>(*data) });
-    assert_eq!(val, t);
-
-}
 
 #[test]
 fn test_encode_u8() {
