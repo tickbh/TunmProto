@@ -46,3 +46,7 @@ pub fn get_json() -> Value {
     let v: serde_json::Value = serde_json::from_reader(f).unwrap();
     return iter_json_to_value(v);
 }
+
+fn main() {
+    
+}

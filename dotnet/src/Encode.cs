@@ -1,5 +1,5 @@
 
-namespace io.tunm {
+namespace proto.tunm {
 
     class Encode {
 
@@ -23,51 +23,74 @@ namespace io.tunm {
                     break;
                 case Values.TYPE_I16: {
                     var val = (short)value;
-                    buffer.write(new byte[2]{(byte)(val & 0xFF), (byte)(val & 0xFF00)});
+                    var bytes = BitConverter.GetBytes( val );
+                    if(!BitConverter.IsLittleEndian) {
+                        Array.Reverse(bytes);
+                    }
+                    buffer.write(bytes);
                     break;
                 }
                 case Values.TYPE_U16: {
                     var val = (ushort)value;
-                    buffer.write(new byte[2]{(byte)(val & 0xFF), (byte)(val & 0xFF00)});
+                    var bytes = BitConverter.GetBytes( val );
+                    if(!BitConverter.IsLittleEndian) {
+                        Array.Reverse(bytes);
+                    }
+                    buffer.write(bytes);
                     break;
                 }
                 case Values.TYPE_I32: {
                     var val = (int)value;
-                    buffer.write(new byte[4]{(byte)(val & 0xFF), (byte)(val & 0xFF00), (byte)(val & 0xFF0000), (byte)(val & 0xFF000000)});
+                    var bytes = BitConverter.GetBytes( val );
+                    if(!BitConverter.IsLittleEndian) {
+                        Array.Reverse(bytes);
+                    }
+                    buffer.write(bytes);
                     break;
                 }
                 case Values.TYPE_U32: {
                     var val = (uint)value;
-                    buffer.write(new byte[4]{(byte)(val & 0xFF), (byte)(val & 0xFF00), (byte)(val & 0xFF0000), (byte)(val & 0xFF000000)});
+                    var bytes = BitConverter.GetBytes( val );
+                    if(!BitConverter.IsLittleEndian) {
+                        Array.Reverse(bytes);
+                    }
+                    buffer.write(bytes);
                     break;
                 }
                 case Values.TYPE_I64: {
                     var val = (long)value;
-                    buffer.write(new byte[8]{
-                        (byte)(val & 0xFF), (byte)(val & 0xFF00), (byte)(val & 0xFF0000), (byte)(val & 0xFF000000),
-                        (byte)(val & 0xFF00000000), (byte)(val & 0xFF0000000000), (byte)(val & 0xFF000000000000), (byte)(val & 0xFF000000000000),
-                    });
+                    var bytes = BitConverter.GetBytes( val );
+                    if(!BitConverter.IsLittleEndian) {
+                        Array.Reverse(bytes);
+                    }
+                    buffer.write(bytes);
                     break;
                 }
                 case Values.TYPE_U64: {
                     var val = (ulong)value;
-                    buffer.write(new byte[8]{
-                                            (byte)(val & 0xFF), (byte)(val & 0xFF00), (byte)(val & 0xFF0000), (byte)(val & 0xFF000000),
-                                            (byte)(val & 0xFF00000000), (byte)(val & 0xFF0000000000), (byte)(val & 0xFF000000000000), (byte)(val & 0xFF000000000000),
-                                        });                    
+                    var bytes = BitConverter.GetBytes( val );
+                    if(!BitConverter.IsLittleEndian) {
+                        Array.Reverse(bytes);
+                    }
+                    buffer.write(bytes);                
                     break;
                 }
                 case Values.TYPE_FLOAT: {
                     var val = (int)((float)value * 1000);
-                    buffer.write(new byte[4]{(byte)(val & 0xFF), (byte)(val & 0xFF00), (byte)(val & 0xFF0000), (byte)(val & 0xFF000000)});
+                    var bytes = BitConverter.GetBytes( val );
+                    if(!BitConverter.IsLittleEndian) {
+                        Array.Reverse(bytes);
+                    }
+                    buffer.write(bytes);        
                     break;
                 }
                 case Values.TYPE_DOUBLE: {
                     var val = (long)((double)value * 1000000);
-                    buffer.write(new byte[8]{
-                        (byte)(val & 0xFF), (byte)(val & 0xFF00), (byte)(val & 0xFF0000), (byte)(val & 0xFF000000),
-                        (byte)(val & 0xFF00000000), (byte)(val & 0xFF0000000000), (byte)(val & 0xFF000000000000), (byte)(val & 0xFF000000000000),
-                    });                    
+                    var bytes = BitConverter.GetBytes( val );
+                    if(!BitConverter.IsLittleEndian) {
+                        Array.Reverse(bytes);
+                    }
+                    buffer.write(bytes);   
                     break;
                 }
                 default:
@@ -84,14 +107,22 @@ namespace io.tunm {
                     val = (byte)value;
                     break;
                 case Values.TYPE_I16:
+                    val = (short)value;
+                    break;
                 case Values.TYPE_U16:
+                    val = (ushort)value;
+                    break;
                 case Values.TYPE_I32:
+                    val = (int)value;
+                    break;
                 case Values.TYPE_U32:
+                    val = (uint)value;
+                    break;
                 case Values.TYPE_I64:
                     val = (long)value;
                     break;
                 case Values.TYPE_U64:
-                    val = (long)value;
+                    val = (long)(ulong)value;
                     break;
                 case Values.TYPE_FLOAT: {
                     val = (long)((float)value * 1000);
@@ -127,8 +158,9 @@ namespace io.tunm {
             switch(Values.get_type_by_value(ref value)) {
                 case Values.TYPE_STR:{
                     var val = (string)value;
-                    encode_varint(ref buffer, val.Length);
-                    buffer.write(System.Text.Encoding.Default.GetBytes(val));
+                    var bytes = System.Text.Encoding.UTF8.GetBytes(val);
+                    encode_varint(ref buffer, bytes.Length);
+                    buffer.write(bytes);
                     break;
                 }
                 case Values.TYPE_RAW:{
@@ -147,9 +179,9 @@ namespace io.tunm {
                 case Values.TYPE_MAP:
                     var val = (Dictionary<Object, Object>)value;
                     encode_varint(ref buffer, val.Count);
-                    foreach(var key in val) {
-                        encode_field(ref buffer, key);
-                        encode_field(ref buffer, val[key]);
+                    foreach(var sub_value in val) {
+                        encode_field(ref buffer, sub_value.Key);
+                        encode_field(ref buffer, sub_value.Value);
                     }
                     break;
                 default:
@@ -163,7 +195,7 @@ namespace io.tunm {
                     var val = (List<Object>)value;
                     encode_varint(ref buffer, val.Count);
                     foreach(var sub_val in val) {
-                        encode_field(ref buffer, value);
+                        encode_field(ref buffer, sub_val);
                     }
                     break;
                 default:
@@ -189,9 +221,15 @@ namespace io.tunm {
                 case Values.TYPE_I32:
                 case Values.TYPE_U64:
                 case Values.TYPE_I64:
-                case Values.TYPE_FLOAT:
-                case Values.TYPE_DOUBLE:
                     encode_sure_type(ref buffer, Values.TYPE_VARINT);
+                    encode_varint(ref buffer, value);
+                    break;
+                case Values.TYPE_FLOAT:
+                    encode_sure_type(ref buffer, Values.TYPE_FLOAT);
+                    encode_number(ref buffer, value);
+                    break;
+                case Values.TYPE_DOUBLE:
+                    encode_sure_type(ref buffer, Values.TYPE_DOUBLE);
                     encode_number(ref buffer, value);
                     break;
 
@@ -217,7 +255,7 @@ namespace io.tunm {
         }
 
         
-        public static void encode_proto(Buffer buffer, String name, List<Object> infos) {
+        public static void encode_proto(ref Buffer buffer, String name, List<Object> infos) {
             var sub_buffer = new Buffer();
             encode_field(ref sub_buffer, infos);
 

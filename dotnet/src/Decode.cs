@@ -1,6 +1,6 @@
 
 
-namespace io.tunm {
+namespace proto.tunm {
 
     class Decode {
 
@@ -94,42 +94,53 @@ namespace io.tunm {
                 case Values.TYPE_U16:{
                     check_vaild(ref buffer, 2);
                     buffer.read(ref buffer.two_temp);
-                    return buffer.two_temp[0] + buffer.two_temp[1] << 8;
+                    if(!BitConverter.IsLittleEndian) {
+                        Array.Reverse(buffer.two_temp);
+                    }
+                    return BitConverter.ToUInt16(buffer.two_temp);
                 }
                 case Values.TYPE_I16:{
                     check_vaild(ref buffer, 2);
                     buffer.read(ref buffer.two_temp);
-                    var is_neg = (buffer.two_temp[1] & 0x80) != 0;
-                    var real = buffer.two_temp[0] + (buffer.two_temp[1] & 0x7F) << 8;
-                    return is_neg ? (short)-real : (short)real;
+                    if(!BitConverter.IsLittleEndian) {
+                        Array.Reverse(buffer.two_temp);
+                    }
+                    return BitConverter.ToInt16(buffer.two_temp);
                 }
                 case Values.TYPE_U32:{
                     check_vaild(ref buffer, 4);
                     buffer.read(ref buffer.four_temp);
-                    return buffer.four_temp[0] + buffer.four_temp[1] << 8 + buffer.four_temp[2] << 16 + buffer.four_temp[3] << 24;
+                    if(!BitConverter.IsLittleEndian) {
+                        Array.Reverse(buffer.four_temp);
+                    }
+                    return BitConverter.ToUInt32(buffer.four_temp);
                 }
                 case Values.TYPE_I32:{
                     check_vaild(ref buffer, 4);
                     buffer.read(ref buffer.four_temp);
-                    var is_neg = (buffer.four_temp[3] & 0x80) != 0;
-                    var real = buffer.four_temp[0] + buffer.four_temp[1] << 8 + buffer.four_temp[2] << 16 + (buffer.four_temp[3] & 0x7F) << 24;
-                    return is_neg ? (int)-real : (int)real;
+                    if(!BitConverter.IsLittleEndian) {
+                        Array.Reverse(buffer.four_temp);
+                    }
+                    return BitConverter.ToInt32(buffer.four_temp);
                 }
                 case Values.TYPE_U64:{
                     check_vaild(ref buffer, 8);
                     byte[] eight_temp = new byte[8];
                     buffer.read(ref eight_temp);
-                    return (ulong)(eight_temp[0] + eight_temp[1] << 8 + eight_temp[2] << 16 + eight_temp[3] << 24
-                     + eight_temp[4] << 32 + eight_temp[5] << 40 + eight_temp[6] << 48 + eight_temp[7] << 56);
+                    if(!BitConverter.IsLittleEndian) {
+                        Array.Reverse(eight_temp);
+                    }
+                    return BitConverter.ToUInt64(eight_temp);
                 }
                 case Values.TYPE_I64:{
                     check_vaild(ref buffer, 8);
                     byte[] eight_temp = new byte[8];
                     buffer.read(ref eight_temp);
-                    var is_neg = (eight_temp[7] & 0x80) != 0;
-                    var real = (long)((long)eight_temp[0] + eight_temp[1] << 8 + eight_temp[2] << 16 + eight_temp[3] << 24
-                     + eight_temp[4] << 32 + eight_temp[5] << 40 + eight_temp[6] << 48 + (eight_temp[7] & 0x7F) << 56);
-                    return is_neg ? -real : real;
+                    buffer.read(ref eight_temp);
+                    if(!BitConverter.IsLittleEndian) {
+                        Array.Reverse(eight_temp);
+                    }
+                    return BitConverter.ToInt64(eight_temp);
                 }
                 case Values.TYPE_VARINT:{
                     return decode_varint(ref buffer);
@@ -137,18 +148,15 @@ namespace io.tunm {
                 case Values.TYPE_FLOAT:{
                     check_vaild(ref buffer, 4);
                     buffer.read(ref buffer.four_temp);
-                    var is_neg = (buffer.four_temp[3] & 0x80) != 0;
-                    var real = buffer.four_temp[0] + buffer.four_temp[1] << 8 + buffer.four_temp[2] << 16 + (buffer.four_temp[3] & 0x7F) << 24;
-                    return (is_neg ? (int)-real : (int)real) / 1000.0;
+                    var val = BitConverter.ToInt32(buffer.four_temp);
+                    return (float)(val / 1000.0);
                 }
                 case Values.TYPE_DOUBLE:{
                     check_vaild(ref buffer, 8);
                     byte[] eight_temp = new byte[8];
                     buffer.read(ref eight_temp);
-                    var is_neg = (eight_temp[7] & 0x80) != 0;
-                    var real = (long)((long)eight_temp[0] + eight_temp[1] << 8 + eight_temp[2] << 16 + eight_temp[3] << 24
-                     + eight_temp[4] << 32 + eight_temp[5] << 40 + eight_temp[6] << 48 + (eight_temp[7] & 0x7F) << 56);
-                    return (is_neg ? -real : real) / 1000000;
+                    var val = BitConverter.ToInt64(eight_temp);
+                    return (double)(val / 1000000.0);
                 }
                 default:
                     throw new Exception("unknow number");

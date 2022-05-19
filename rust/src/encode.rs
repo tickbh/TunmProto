@@ -1,7 +1,7 @@
 use std::io::Write;
 use std::mem;
 
-use crate::{get_type_by_value, Buffer, RpResult, Value, TYPE_STR_IDX, TYPE_VARINT};
+use crate::{get_type_by_value, Buffer, RpResult, Value, TYPE_STR_IDX, TYPE_VARINT, TYPE_FLOAT, TYPE_DOUBLE};
 
 #[inline(always)]
 fn append_and_align(buffer: &mut Buffer, val: &[u8]) -> RpResult<()> {
@@ -146,7 +146,7 @@ pub fn encode_str_idx(buffer: &mut Buffer, pattern: &str) -> RpResult<()> {
 pub fn encode_str_raw(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
     match *value {
         Value::Str(ref val) => {
-            encode_varint(buffer, &Value::U16(val.len() as u16))?;
+            encode_varint(buffer, &Value::U16(val.as_bytes().len() as u16))?;
             append_and_align(buffer, &val.as_bytes()[..])?;
         }
         Value::Raw(ref val) => {
@@ -189,11 +189,17 @@ pub fn encode_field(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
         | Value::I32(_)
         | Value::U64(_)
         | Value::I64(_)
-        | Value::Varint(_)
-        | Value::Float(_)
-        | Value::Double(_) => {
+        | Value::Varint(_) => {
             encode_sure_type(buffer, TYPE_VARINT)?;
             encode_varint(buffer, value)?;
+        }
+        | Value::Float(_) => {
+            encode_sure_type(buffer, TYPE_FLOAT)?;
+            encode_number(buffer, value)?;
+        }
+        | Value::Double(_) => {
+            encode_sure_type(buffer, TYPE_DOUBLE)?;
+            encode_number(buffer, value)?;
         }
         Value::Str(ref pattern) => {
             encode_str_idx(buffer, pattern)?;

@@ -1,4 +1,4 @@
-namespace io.tunm {
+namespace proto.tunm {
 
     class Values {
         public const byte TYPE_NIL = 0;

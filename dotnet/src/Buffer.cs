@@ -1,5 +1,5 @@
 
-namespace io.tunm {
+namespace proto.tunm {
     class Buffer {
         byte[] val;
         int rpos;
@@ -86,7 +86,7 @@ namespace io.tunm {
             if(left == 0 || this.val.Length == 0) {
                 return 0;
             }
-            var read = left > this.val.Length ? this.val.Length : left;
+            var read = left > buf.Length ? buf.Length : left;
             Array.Copy(this.val, this.rpos, buf, 0, read);
             this.rpos += read;
             if(this.rpos >= this.wpos) {

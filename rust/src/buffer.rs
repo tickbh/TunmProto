@@ -36,14 +36,13 @@ impl Buffer {
             self.str_arr.len() as u16 - 1
         }
     }
-    
+
     pub fn get_str(&self, idx: u16) -> RpResult<String> {
         if idx as usize >= self.str_arr.len() {
             fail!((ErrorKind::BufferOverMaxError, "must left space to read "));
         } else {
             Ok(self.str_arr[idx as usize].clone())
         }
-        
     }
 
     pub fn get_data(&self) -> &Vec<u8> {
@@ -135,6 +134,8 @@ impl Read for Buffer {
         }
         Ok(read)
     }
+
+    
 }
 
 impl Write for Buffer {
