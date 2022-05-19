@@ -1,6 +1,6 @@
 # Tunm
 simple binary proto
-一种简单的二进制数据协议
+一种对标JSON的二进制数据协议
 
 ## 支持的数据类型
 基本支持的类型 "u8",   "i8",   "u16",   "i16",   "u32",   "i32", "u64",   "i64", "varint", "float",   "string",  "raw", "array",  "map"
@@ -16,6 +16,11 @@ simple binary proto
 - str_idx 字符串索引值, 在str的arr表中的第几位, 重复的str则在同一个位置, 用varint表示
 - array 数组类型, 先用varint表示array的长度, 然后再写入各个value的数值
 - map map类型, 先用varint表示map的长度, 然后先写入key, 再写入value, 依次循环到结束
+
+## 与protobuf差异
+> 相对protobuf, 无需预先定义任何的数据格式, 更好的适应多变的场景, 或者客户端不好更新的情况, 拥有更好的自适应性, 简单开封即用, 和JSON一样, 在可支持的数据类型里, 可以自由的进行转换
+## 与JSON的差异
+> 可以把这个看做是二进制的JSON格式, 有更好的压缩率和更快的解析速度
 
 
 ## 数据使用, 以Rust为例
@@ -76,3 +81,6 @@ name = cmd_level4_full
 解析buffer耗时 = Ok(22.642ms)
 ```
 解析速度约为JSON的68倍, 符合预期, 大小为明文的0.16倍, 符合压缩比
+
+#### 相关连接
+[协议地址https://github.com/tickbh/TunmProto](https://github.com/tickbh/TunmProto)

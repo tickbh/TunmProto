@@ -2,3 +2,5 @@
 */.vscode
 /godot/.import
 /godot/.mono/
+/dotnet/obj/
+/dotnet/bin/
