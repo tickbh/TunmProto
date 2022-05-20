@@ -1,6 +1,8 @@
+using System;
+
 namespace proto.tunm {
 
-    class Values {
+    class TunmValues {
         public const byte TYPE_NIL = 0;
         public const byte TYPE_BOOL = 1;
         public const byte TYPE_U8 = 2;
@@ -50,49 +52,49 @@ namespace proto.tunm {
 
         static public byte get_type_by_name(string name) {
             switch(name) {
-                case STR_TYPE_NIL: return Values.TYPE_NIL;
-                case STR_TYPE_BOOL: return Values.TYPE_BOOL;
-                case STR_TYPE_U8: return Values.TYPE_U8;
-                case STR_TYPE_I8: return Values.TYPE_I8;
-                case STR_TYPE_U16: return Values.TYPE_U16;
-                case STR_TYPE_I16: return Values.TYPE_I16;
-                case STR_TYPE_U32: return Values.TYPE_U32;
-                case STR_TYPE_I32: return Values.TYPE_I32;
-                case STR_TYPE_U64: return Values.TYPE_U64;
-                case STR_TYPE_I64: return Values.TYPE_I64;
-                case STR_TYPE_VARINT: return Values.TYPE_VARINT;
-                case STR_TYPE_FLOAT: return Values.TYPE_FLOAT;
-                case STR_TYPE_DOUBLE: return Values.TYPE_DOUBLE;
-                case STR_TYPE_STR: return Values.TYPE_STR;
-                case STR_TYPE_STR_IDX: return Values.TYPE_STR_IDX;
-                case STR_TYPE_RAW: return Values.TYPE_RAW;
-                case STR_TYPE_ARR: return Values.TYPE_ARR;
-                case STR_TYPE_MAP: return Values.TYPE_MAP;
-                default: return Values.TYPE_NIL;
+                case STR_TYPE_NIL: return TunmValues.TYPE_NIL;
+                case STR_TYPE_BOOL: return TunmValues.TYPE_BOOL;
+                case STR_TYPE_U8: return TunmValues.TYPE_U8;
+                case STR_TYPE_I8: return TunmValues.TYPE_I8;
+                case STR_TYPE_U16: return TunmValues.TYPE_U16;
+                case STR_TYPE_I16: return TunmValues.TYPE_I16;
+                case STR_TYPE_U32: return TunmValues.TYPE_U32;
+                case STR_TYPE_I32: return TunmValues.TYPE_I32;
+                case STR_TYPE_U64: return TunmValues.TYPE_U64;
+                case STR_TYPE_I64: return TunmValues.TYPE_I64;
+                case STR_TYPE_VARINT: return TunmValues.TYPE_VARINT;
+                case STR_TYPE_FLOAT: return TunmValues.TYPE_FLOAT;
+                case STR_TYPE_DOUBLE: return TunmValues.TYPE_DOUBLE;
+                case STR_TYPE_STR: return TunmValues.TYPE_STR;
+                case STR_TYPE_STR_IDX: return TunmValues.TYPE_STR_IDX;
+                case STR_TYPE_RAW: return TunmValues.TYPE_RAW;
+                case STR_TYPE_ARR: return TunmValues.TYPE_ARR;
+                case STR_TYPE_MAP: return TunmValues.TYPE_MAP;
+                default: return TunmValues.TYPE_NIL;
             }
         }
         
         static public string get_name_by_type(byte index) {
             switch(index) {
-                case Values.TYPE_NIL: return Values.STR_TYPE_NIL;
-                case Values.TYPE_BOOL: return Values.STR_TYPE_BOOL;
-                case Values.TYPE_U8: return Values.STR_TYPE_U8;
-                case Values.TYPE_I8: return Values.STR_TYPE_I8;
-                case Values.TYPE_U16: return Values.STR_TYPE_U16;
-                case Values.TYPE_I16: return Values.STR_TYPE_I16;
-                case Values.TYPE_U32: return Values.STR_TYPE_U32;
-                case Values.TYPE_I32: return Values.STR_TYPE_I32;
-                case Values.TYPE_U64: return Values.STR_TYPE_U64;
-                case Values.TYPE_I64: return Values.STR_TYPE_I64;
-                case Values.TYPE_VARINT: return Values.STR_TYPE_VARINT;
-                case Values.TYPE_FLOAT: return Values.STR_TYPE_FLOAT;
-                case Values.TYPE_DOUBLE: return Values.STR_TYPE_DOUBLE;
-                case Values.TYPE_STR: return Values.STR_TYPE_STR;
-                case Values.TYPE_STR_IDX: return Values.STR_TYPE_STR_IDX;
-                case Values.TYPE_RAW: return Values.STR_TYPE_RAW;
-                case Values.TYPE_ARR: return Values.STR_TYPE_ARR;
-                case Values.TYPE_MAP: return Values.STR_TYPE_MAP;
-                default: return Values.STR_TYPE_NIL;
+                case TunmValues.TYPE_NIL: return TunmValues.STR_TYPE_NIL;
+                case TunmValues.TYPE_BOOL: return TunmValues.STR_TYPE_BOOL;
+                case TunmValues.TYPE_U8: return TunmValues.STR_TYPE_U8;
+                case TunmValues.TYPE_I8: return TunmValues.STR_TYPE_I8;
+                case TunmValues.TYPE_U16: return TunmValues.STR_TYPE_U16;
+                case TunmValues.TYPE_I16: return TunmValues.STR_TYPE_I16;
+                case TunmValues.TYPE_U32: return TunmValues.STR_TYPE_U32;
+                case TunmValues.TYPE_I32: return TunmValues.STR_TYPE_I32;
+                case TunmValues.TYPE_U64: return TunmValues.STR_TYPE_U64;
+                case TunmValues.TYPE_I64: return TunmValues.STR_TYPE_I64;
+                case TunmValues.TYPE_VARINT: return TunmValues.STR_TYPE_VARINT;
+                case TunmValues.TYPE_FLOAT: return TunmValues.STR_TYPE_FLOAT;
+                case TunmValues.TYPE_DOUBLE: return TunmValues.STR_TYPE_DOUBLE;
+                case TunmValues.TYPE_STR: return TunmValues.STR_TYPE_STR;
+                case TunmValues.TYPE_STR_IDX: return TunmValues.STR_TYPE_STR_IDX;
+                case TunmValues.TYPE_RAW: return TunmValues.STR_TYPE_RAW;
+                case TunmValues.TYPE_ARR: return TunmValues.STR_TYPE_ARR;
+                case TunmValues.TYPE_MAP: return TunmValues.STR_TYPE_MAP;
+                default: return TunmValues.STR_TYPE_NIL;
             }
         }
         

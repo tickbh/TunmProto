@@ -1,6 +1,10 @@
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
 namespace proto.tunm {
-    class Buffer {
+    class TunmBuffer {
         byte[] val;
         int rpos;
         int wpos;
@@ -12,7 +16,7 @@ namespace proto.tunm {
         public List<String> str_arr;
         Dictionary<String, int> str_map;
 
-        public Buffer() {
+        public TunmBuffer() {
             this.val = new byte[2048];
             this.str_arr = new List<String>();
             this.str_map = new Dictionary<String, int>();
@@ -33,9 +37,9 @@ namespace proto.tunm {
             }
         }
 
-        public String? get_str(int idx) {
+        public String get_str(int idx) {
             if (idx >= this.str_arr.Count || idx < 0) {
-                return null;
+                return "";
             }
             return this.str_arr[idx];
         }
@@ -77,7 +81,7 @@ namespace proto.tunm {
             this.wpos = 0;
         }
 
-        public void extend(Buffer buffer) {
+        public void extend(TunmBuffer buffer) {
             this.write(buffer.get_write_data());
         }
 
