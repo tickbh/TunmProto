@@ -1,6 +1,112 @@
 
+using System.Text;
+
 namespace proto.tunm {
     class  Test {
+
+    static String ObjectToString(object obj)
+    {
+        var builder = new StringBuilder();
+        ObjectToString(ref builder, obj);
+        return builder.ToString();
+
+    }
+    static void ObjectToString(ref StringBuilder builder, object obj)
+    {
+        if(obj == null)
+        {
+            builder.Append("null");
+            return;
+        }
+        var name = obj.GetType().Name;
+        if (name == TunmValues.STR_TYPE_STR)
+        {
+            builder.AppendFormat("\"{0}\"", (String)obj);
+        }
+        else if (name == TunmValues.STR_TYPE_ARR)
+        {
+            var list = (List<object>)(obj);
+            var index = 0;
+            builder.Append("[");
+            foreach (var sub_val in list)
+            {
+                ObjectToString(ref builder, sub_val);
+                if(++index < list.Count)
+                {
+                    builder.Append(",");
+                }
+            }
+            builder.Append("]");
+        }
+        else if (name == TunmValues.STR_TYPE_MAP)
+        {
+            var index = 0;
+            var map = (Dictionary<object, object>)(obj);
+            builder.Append("{");
+            foreach (var key in map)
+            {
+                ObjectToString(ref builder, key.Key);
+                builder.Append(":");
+                ObjectToString(ref builder, key.Value);
+                if (++index < map.Count)
+                {
+                    builder.Append(",");
+                }
+            }
+            builder.Append("}");
+        }
+        else if (name == TunmValues.STR_TYPE_MAP)
+        {
+            var map = (Dictionary<object, object>)(obj);
+            builder.AppendFormat("Dictionary{}{", map.Count);
+            foreach (var key in map)
+            {
+                ObjectToString(ref builder, key);
+                builder.Append(":");
+                ObjectToString(ref builder, map[key]);
+                builder.Append(",");
+            }
+            builder.Append("}");
+        }
+        else
+        {
+            switch (name)
+            {
+                case TunmValues.STR_TYPE_I8:
+                case TunmValues.STR_TYPE_U8:
+                    builder.Append((byte)obj);
+                    break;
+                case TunmValues.STR_TYPE_I16:
+                    builder.Append((short)obj);
+                    break;
+                case TunmValues.STR_TYPE_U16:
+                    builder.Append((ushort)obj);
+                    break;
+                case TunmValues.STR_TYPE_I32:
+                    builder.Append((int)obj);
+                    break;
+                case TunmValues.STR_TYPE_U32:
+                    builder.Append((uint)obj);
+                    break;
+                case TunmValues.STR_TYPE_I64:
+                    builder.Append((long)obj);
+                    break;
+                case TunmValues.STR_TYPE_U64:
+                    builder.Append((ulong)obj);
+                    break;
+                case TunmValues.STR_TYPE_FLOAT:
+                    {
+                        builder.Append((float)obj);
+                        break;
+                    }
+                case TunmValues.STR_TYPE_DOUBLE:
+                    {
+                        builder.Append((double)obj);
+                        break;
+                    }
+            }
+        }
+    }
 
         static void assert_eq(Object obj1, Object obj2) {
             if(obj1.GetType() != obj2.GetType()) {
@@ -122,6 +228,10 @@ namespace proto.tunm {
 
             var proto_name = "";
             var read = TunmDecode.decode_proto(ref buffer, out proto_name);
+
+            StringBuilder sb = new StringBuilder();
+            ObjectToString(ref sb, read);
+            Console.WriteLine(sb.ToString());
 
             assert_eq(proto_name, "cmd_test_op");
             assert_eq(read, array);

@@ -80,6 +80,28 @@ impl Buffer {
     pub fn get_wpos(&self) -> usize {
         self.wpos
     }
+    
+    pub fn get_read_array(&mut self, max_bytes: usize) -> &mut [u8] {
+        if self.val.len() - self.wpos < max_bytes {
+            self.val.resize(self.wpos + max_bytes + 1, 0);
+        }
+        &mut self.val[self.wpos .. (self.wpos+max_bytes-1)]
+    }
+
+    pub fn write_offset(&mut self, pos: usize) {
+        self.wpos = self.wpos + pos;
+    }
+    
+    pub fn read_offset(&mut self, pos: usize) -> bool {
+        self.rpos = self.rpos + pos;
+        if self.rpos == self.wpos {
+            self.rpos = 0;
+            self.wpos = 0;
+            true
+        } else {
+            false
+        }
+    }
 
     pub fn drain(&mut self, pos: usize) {
         self.rpos = self.rpos - cmp::min(self.rpos, pos);
@@ -94,9 +116,14 @@ impl Buffer {
         let pos = cmp::min(self.val.len(), pos);
         self.val.drain(..pos).collect()
     }
+    
+    pub fn drain_all_collect(&mut self) -> Vec<u8> {
+        let (rpos, wpos) = (self.rpos, self.wpos);
+        self.clear();
+        self.val.drain(rpos..wpos).collect()
+    }
 
     pub fn clear(&mut self) {
-        self.val.clear();
         self.rpos = 0;
         self.wpos = 0;
     }
