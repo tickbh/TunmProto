@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections;
 
 namespace proto.tunm {
 
@@ -179,7 +180,7 @@ namespace proto.tunm {
         
         public static Object decode_arr(ref TunmBuffer buffer) {
             long len = decode_varint(ref buffer);
-            var list = new List<Object>();
+            var list = new ArrayList();
             for(var i = 0; i < len; i++) {
                 var val = decode_field(ref buffer);
                 list.Add(val);
@@ -226,7 +227,7 @@ namespace proto.tunm {
             var pattern = decode_type(ref buffer);
             return decode_by_pattern(ref buffer, pattern);
         }
-        public static List<Object> decode_proto(ref TunmBuffer buffer, out string name) {
+        public static ArrayList decode_proto(ref TunmBuffer buffer, out string name) {
             name = (string)decode_str_raw(ref buffer, TunmValues.TYPE_STR);
     
             var str_len = (int)decode_varint(ref buffer);
@@ -239,7 +240,7 @@ namespace proto.tunm {
             if (TunmValues.get_type_by_value(ref sub_value) != TunmValues.TYPE_ARR) {
                 throw new Exception("参数异常");
             }
-            return (List<Object>)sub_value;
+            return (ArrayList)sub_value;
         }
     }
 }

@@ -1,6 +1,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections;
 
 namespace proto.tunm {
 
@@ -195,7 +196,7 @@ namespace proto.tunm {
         public static void encode_arr(ref TunmBuffer buffer, Object value) {
             switch(TunmValues.get_type_by_value(ref value)) {
                 case TunmValues.TYPE_ARR:
-                    var val = (List<Object>)value;
+                    var val = (ArrayList)value;
                     encode_varint(ref buffer, val.Count);
                     foreach(var sub_val in val) {
                         encode_field(ref buffer, sub_val);
@@ -258,7 +259,7 @@ namespace proto.tunm {
         }
 
         
-        public static void encode_proto(ref TunmBuffer buffer, String name, List<Object> infos) {
+        public static void encode_proto(ref TunmBuffer buffer, String name, ArrayList infos) {
             var sub_buffer = new TunmBuffer();
             encode_field(ref sub_buffer, infos);
 

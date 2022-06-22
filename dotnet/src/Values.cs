@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using System.Collections.Generic;
+using System.Collections;
 
 namespace proto.tunm
 {
@@ -44,7 +45,7 @@ namespace proto.tunm
         public const string STR_TYPE_STR = "String";
         public const string STR_TYPE_STR_IDX = "StringIdx";
         public const string STR_TYPE_RAW = "Byte[]";
-        public const string STR_TYPE_ARR = "List`1";
+        public const string STR_TYPE_ARR = "ArrayList";
         public const string STR_TYPE_MAP = "Dictionary`2";
 
         static public byte get_type_by_value(ref Object obj)
@@ -130,7 +131,7 @@ namespace proto.tunm
             }
             else if (name == TunmValues.STR_TYPE_ARR)
             {
-                var list = (List<object>)(obj);
+                var list = (ArrayList)(obj);
                 var index = 0;
                 builder.Append("[");
                 foreach (var sub_val in list)
@@ -315,13 +316,13 @@ namespace proto.tunm
             return new Dictionary<Object, Object>();
         }
 
-        public static List<Object> get_arr(Object obj)
+        public static ArrayList get_arr(Object obj)
         {
             if (is_arr(obj))
             {
-                return (List<Object>)(obj);
+                return (ArrayList)(obj);
             }
-            return new List<Object>();
+            return new ArrayList();
         }
 
         public static long get_long(Object obj)
@@ -393,6 +394,7 @@ namespace proto.tunm
         public static String get_string(Object obj, int index)
         {
             var arr = get_arr(obj);
+            
             if (arr == null)
             {
                 return "";
@@ -477,7 +479,7 @@ namespace proto.tunm
         }
 
 
-        public static List<Object> get_arr(Object obj, String key)
+        public static ArrayList get_arr(Object obj, String key)
         {
             var map = get_dictionary(obj);
             if (map == null)
@@ -488,22 +490,22 @@ namespace proto.tunm
             {
                 return get_arr(map[key]);
             }
-            return new List<Object>();
+            return new ArrayList();
         }
 
-        public static List<Object> get_arr(Object obj, int index)
+        public static ArrayList get_arr(Object obj, int index)
         {
             var arr = get_arr(obj);
             if (arr == null)
             {
-                return new List<Object>();
+                return new ArrayList();
             }
 
             if (arr.Count > index)
             {
                 return get_arr(arr[index]);
             }
-            return new List<Object>();
+            return new ArrayList();
         }
 
 

@@ -1,5 +1,6 @@
 
 using System.Text;
+using System.Collections;
 
 namespace proto.tunm {
     class  Test {
@@ -25,7 +26,7 @@ namespace proto.tunm {
         }
         else if (name == TunmValues.STR_TYPE_ARR)
         {
-            var list = (List<object>)(obj);
+            var list = (ArrayList)(obj);
             var index = 0;
             builder.Append("[");
             foreach (var sub_val in list)
@@ -122,9 +123,9 @@ namespace proto.tunm {
                 }
                 return;
             }
-            if(obj1.GetType().Name == "List`1" || obj1.GetType().Name == "Byte[]") {
-                var list1 = (List<Object>)(obj1);
-                var list2 = (List<Object>)(obj2);
+            if(obj1.GetType().Name == "ArrayList" || obj1.GetType().Name == "Byte[]") {
+                var list1 = (ArrayList)(obj1);
+                var list2 = (ArrayList)(obj2);
                 assert_eq(list1.Count, list2.Count);
                 for(var i = 0; i < list1.Count; i++) {
                     assert_eq(list1[i], list2[i]);
@@ -221,7 +222,7 @@ namespace proto.tunm {
             hash_value.Add("name", "tickbh");
             hash_value.Add("proto", "tunm");
             hash_value.Add("index", (long)1);
-            var array = new List<Object>();
+            var array = new ArrayList();
             array.Add(hash_value);
             TunmEncode.encode_proto(ref buffer, "cmd_test_op", array);
 
