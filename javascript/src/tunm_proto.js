@@ -72,7 +72,7 @@ RtProtoPrototype.decode_str_raw = function (buffer, pattern) {
             return ""
         }
         if(this.td_check_unvaild(buffer, length)) throw new Error("not vaild size");
-        return buffer.readUTF8String(length)
+        return buffer.readUTF8String(length, "b")
     }
     case this.TYPE_RAW: {
         var length = this.decode_varint(buffer, this.TYPE_U16)
