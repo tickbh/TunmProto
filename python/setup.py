@@ -17,7 +17,7 @@ setup(
     author="tickbh",
     author_email="tickdream125@hotmail.com",
     packages=[
-        'src', 
+        'tunm_proto', 
     ],
     platforms="any",
     python_requires='>=3.6',
