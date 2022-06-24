@@ -1,7 +1,4 @@
-import bytebuffer
-import tunm
-from bytebuffer import ByteBuffer
-from tunm import TPPacker, TP_DATA_TYPE
+from tunm_proto import ByteBuffer, TPPacker, TP_DATA_TYPE
 
 def func(x):
     return x +1

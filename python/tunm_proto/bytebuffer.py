@@ -1,7 +1,4 @@
 
-from telnetlib import theNULL
-
-
 class ByteBuffer(object):
     def __init__(self):
         self.buffer = bytearray([00]*1024)
@@ -65,7 +62,7 @@ class ByteBuffer(object):
         return int.from_bytes(self._read(length=length), byteorder=self.endianness)
 
     def write(self, value, size=0):
-        from tunm import TP_DATA_TYPE
+        from tunm_proto import TP_DATA_TYPE
         t = type(value)
         if t == int:
             b = int.to_bytes(value, size, byteorder=self.endianness)

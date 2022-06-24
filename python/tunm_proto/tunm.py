@@ -1,9 +1,8 @@
 import enum
 from enum import IntEnum
 from math import floor
-from telnetlib import theNULL
 
-from bytebuffer import ByteBuffer
+from tunm_proto import ByteBuffer
  
 @enum.unique
 class TP_DATA_TYPE(IntEnum):
