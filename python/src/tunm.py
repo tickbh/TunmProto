@@ -1,9 +1,9 @@
-from ast import pattern
 import enum
 from enum import IntEnum
 from math import floor
+from telnetlib import theNULL
 
-from .bytebuffer import ByteBuffer
+from bytebuffer import ByteBuffer
  
 @enum.unique
 class TP_DATA_TYPE(IntEnum):
@@ -30,17 +30,22 @@ class TPPacker:
     
     @staticmethod
     def get_type_by_ref(ref_type):
-        if ref_type == str:
+        t = type(ref_type)
+        if t == str:
             return TP_DATA_TYPE.TYPE_STR
-        elif ref_type == bytes:
+        elif t == bytes:
             return TP_DATA_TYPE.TYPE_RAW
-        elif ref_type == dict:
+        elif t == dict:
             return TP_DATA_TYPE.TYPE_MAP
-        elif ref_type == list:
+        elif t == list:
             return TP_DATA_TYPE.TYPE_ARR
-        elif ref_type == int:
+        elif t == int:
+            if ref_type < 256 and ref_type >= 0:
+                return TP_DATA_TYPE.TYPE_U8
+            elif ref_type < 128 and ref_type >= -128:
+                return TP_DATA_TYPE.TYPE_I8
             return TP_DATA_TYPE.TYPE_I64
-        elif ref_type == float:
+        elif t == float:
             return TP_DATA_TYPE.TYPE_DOUBLE
         return TP_DATA_TYPE.TYPE_NIL
     
@@ -113,12 +118,14 @@ class TPPacker:
             return None
         elif pattern == TP_DATA_TYPE.TYPE_BOOL:
             return True if buffer.read_u8() != 0 else False
-        elif pattern >= TP_DATA_TYPE.TYPE_U8 and pattern <= TP_DATA_TYPE.TYPE_I64:
+        elif pattern >= TP_DATA_TYPE.TYPE_U8 and pattern <= TP_DATA_TYPE.TYPE_I8:
+            return TPPacker.decode_number(buffer, pattern)
+        elif pattern >= TP_DATA_TYPE.TYPE_U16 and pattern <= TP_DATA_TYPE.TYPE_I64:
             return TPPacker.decode_varint(buffer)
         elif pattern == TP_DATA_TYPE.TYPE_FLOAT:
-            return TPPacker.decode_varint(buffer) / 1000.0
+            return TPPacker.decode_number(buffer, TP_DATA_TYPE.TYPE_I32) / 1000.0
         elif pattern == TP_DATA_TYPE.TYPE_DOUBLE:
-            return TPPacker.decode_varint(buffer) / 1000000.0
+            return TPPacker.decode_number(buffer, TP_DATA_TYPE.TYPE_I64) / 1000000.0
         elif pattern == TP_DATA_TYPE.TYPE_VARINT:
             return TPPacker.decode_varint(buffer) 
         elif pattern == TP_DATA_TYPE.TYPE_STR_IDX:
@@ -127,9 +134,9 @@ class TPPacker:
         elif pattern == TP_DATA_TYPE.TYPE_STR or pattern == TP_DATA_TYPE.TYPE_RAW:
             return TPPacker.decode_str_raw(buffer, pattern)
         elif pattern == TP_DATA_TYPE.TYPE_ARR:
-            return TPPacker.decode_arr(buffer, pattern)
-        elif pattern == TP_DATA_TYPE.TYPE_ARR:
-            return TPPacker.decode_map(buffer, pattern)
+            return TPPacker.decode_arr(buffer)
+        elif pattern == TP_DATA_TYPE.TYPE_MAP:
+            return TPPacker.decode_map(buffer)
         else:
             raise Exception("unknow type")
         
@@ -160,24 +167,29 @@ class TPPacker:
         name = TPPacker.decode_str_raw(buffer, TP_DATA_TYPE.TYPE_STR)
         str_len = TPPacker.decode_varint(buffer)
         for _ in range(str_len):
-            value = TPPacker.decode_str_raw(buffer, TPPacker.TYPE_STR);
-            buffer.add_str(value);
-        sub_value = TPPacker.decode_field(buffer);
-        return {"proto": name, "list": sub_value};
+            value = TPPacker.decode_str_raw(buffer, TP_DATA_TYPE.TYPE_STR)
+            buffer.add_str(value)
+        sub_value = TPPacker.decode_field(buffer)
+        return name, sub_value
     
     
     @staticmethod
     def encode_varint(buffer: ByteBuffer, value):
         if type(value) == bool:
             value = 1 if value else 0
+            
+        real = value * 2
+        if value < 0:
+            real = -(value + 1) * 2 + 1
         
         for _i in range(12):
-            b = value & 0x7F
-            value >>= 7
-            if value:
+            b = real & 0x7F
+            real >>= 7
+            if real > 0:
                 buffer.write_u8(b | 0x80)
             else:
                 buffer.write_u8(b)
+                break
         
     @staticmethod
     def encode_type(buffer: ByteBuffer, value):
@@ -206,9 +218,9 @@ class TPPacker:
         elif pattern == TP_DATA_TYPE.TYPE_I64:
             return buffer.write_i64(value)
         elif pattern == TP_DATA_TYPE.TYPE_FLOAT:
-            return buffer.write_i32(value * 1000.0)
+            return buffer.write_i32(floor(value * 1000.0))
         elif pattern == TP_DATA_TYPE.TYPE_DOUBLE:
-            return buffer.write_i64(value * 1000000.0)
+            return buffer.write_i64(floor(value * 1000000.0))
         else:
             raise Exception(f"Unknow decode number type {pattern}")
             
@@ -216,10 +228,10 @@ class TPPacker:
     def encode_str_idx(buffer: ByteBuffer, value):
         idx = buffer.add_str(value)
         TPPacker.encode_type(buffer, TP_DATA_TYPE.TYPE_STR_IDX)
-        TPPacker.encode_varint(buffer, idx);
+        TPPacker.encode_varint(buffer, idx)
         
     @staticmethod
-    def encode_str_raw(buffer: ByteBuffer, value):
+    def encode_str_raw(buffer: ByteBuffer, value, pattern):
         if pattern == TP_DATA_TYPE.TYPE_STR:
             b = value.encode("utf-8")
             TPPacker.encode_varint(buffer, len(b))
@@ -231,34 +243,36 @@ class TPPacker:
             raise Exception(f"Unknow decode str type {pattern}")
         
     @staticmethod        
-    def encode_field(buffer: ByteBuffer, value):
-        pattern = TPPacker.get_type_by_ref(value)
+    def encode_field(buffer: ByteBuffer, value, pattern=None):
+        if not pattern:
+            pattern = TPPacker.get_type_by_ref(value)
         if pattern == TP_DATA_TYPE.TYPE_NIL:
             return None
         elif pattern == TP_DATA_TYPE.TYPE_BOOL:
-            TPPacker.encode_type(buffer, pattern);
+            TPPacker.encode_type(buffer, pattern)
             TPPacker.encode_bool(buffer, value)
-        elif pattern >= TP_DATA_TYPE.TYPE_U8 and pattern <= TP_DATA_TYPE.TYPE_I64:
-            TPPacker.encode_type(buffer, TP_DATA_TYPE.TYPE_VARINT);
+        elif pattern >= TP_DATA_TYPE.TYPE_U8 and pattern <= TP_DATA_TYPE.TYPE_I8:
+            TPPacker.encode_type(buffer, pattern)
+            TPPacker.encode_number(buffer, value, pattern)
+        elif pattern >= TP_DATA_TYPE.TYPE_U16 and pattern <= TP_DATA_TYPE.TYPE_I64:
+            TPPacker.encode_type(buffer, TP_DATA_TYPE.TYPE_VARINT)
             TPPacker.encode_varint(buffer, value)
         elif pattern == TP_DATA_TYPE.TYPE_FLOAT:
-            TPPacker.encode_type(buffer, pattern);
-            value = floor(value * 1000)
-            TPPacker.encode_varint(buffer, value)
+            TPPacker.encode_type(buffer, pattern)
+            TPPacker.encode_number(buffer, value, pattern)
         elif pattern == TP_DATA_TYPE.TYPE_DOUBLE:
-            TPPacker.encode_type(buffer, pattern);
-            value = floor(value * 1000000)
-            TPPacker.encode_varint(buffer, value)
+            TPPacker.encode_type(buffer, pattern)
+            TPPacker.encode_number(buffer, value, pattern)
         elif pattern == TP_DATA_TYPE.TYPE_STR:
             TPPacker.encode_str_idx(buffer, value)
         elif pattern == TP_DATA_TYPE.TYPE_RAW:
-            TPPacker.encode_type(buffer, pattern);
+            TPPacker.encode_type(buffer, pattern)
             TPPacker.encode_str_raw(buffer, value)
         elif pattern == TP_DATA_TYPE.TYPE_ARR:
-            TPPacker.encode_type(buffer, pattern);
+            TPPacker.encode_type(buffer, pattern)
             TPPacker.encode_arr(buffer, value)
         elif pattern == TP_DATA_TYPE.TYPE_MAP:
-            TPPacker.encode_type(buffer, pattern);
+            TPPacker.encode_type(buffer, pattern)
             TPPacker.encode_map(buffer, value)
         else:
             raise Exception("unknow type")

@@ -4,10 +4,10 @@ from telnetlib import theNULL
 
 class ByteBuffer(object):
     def __init__(self):
-        self.buffer = None
+        self.buffer = bytearray([00]*1024)
         self.wpos = 0
         self.rpos = 0
-        self.endianness = "big"
+        self.endianness = "little"
         
         self.str_arr = []
         self.str_map = {}
@@ -65,9 +65,12 @@ class ByteBuffer(object):
         return int.from_bytes(self._read(length=length), byteorder=self.endianness)
 
     def write(self, value, size=0):
+        from tunm import TP_DATA_TYPE
         t = type(value)
         if t == int:
             b = int.to_bytes(value, size, byteorder=self.endianness)
+        elif t == TP_DATA_TYPE:
+            b = int.to_bytes(int(value), 1, byteorder=self.endianness)
         elif t == list:
             b = bytes(value)
         elif t == bytes or t == bytearray:
@@ -75,7 +78,7 @@ class ByteBuffer(object):
         else:
             raise Exception('Attempting to write unknown object into Buffer')
         l = len(b)
-        assert self._check_buffer(l), 'Buffer has not enough space left'
+        assert self._ensure_buffer(l), 'Buffer has not enough space left'
         for i in range(l):
             self.buffer[self.wpos + i:self.wpos + i + 1] = b[i:i + 1]
         self._write_offsets(l)
@@ -104,29 +107,29 @@ class ByteBuffer(object):
     def write_i64(self, value):
         self.write(value, 8)
         
-    def read_u8(self, value):
-        return self.read(value, 1)
+    def read_u8(self):
+        return self.read(1)
         
-    def read_i8(self, value):
-        return self.read(value, 1)
+    def read_i8(self):
+        return self.read(1)
         
-    def read_u16(self, value):
-        return self.read(value, 2)
+    def read_u16(self):
+        return self.read(2)
         
-    def read_i16(self, value):
-        return self.read(value, 2)
+    def read_i16(self):
+        return self.read(2)
         
-    def read_u32(self, value):
-        return self.read(value, 4)
+    def read_u32(self):
+        return self.read(4)
         
-    def read_i32(self, value):
-        return self.read(value, 4)
+    def read_i32(self):
+        return self.read(4)
         
-    def read_u64(self, value):
-        return self.read(value, 8)
+    def read_u64(self):
+        return self.read(8)
         
-    def read_i64(self, value):
-        return self.read(value, 8)
+    def read_i64(self):
+        return self.read(8)
     
     def write_str(self, s: str):
         return self.write(s.encode("utf-8"))
@@ -160,7 +163,9 @@ class ByteBuffer(object):
         self.rpos = 0
         
     def all_bytes(self):
-        return self.buffer[self.rpos:self.wpos+1]
+        return self.buffer[self.rpos:self.wpos]
 
+    def get_bytes_len(self):
+        return self.wpos - self.rpos
 
     

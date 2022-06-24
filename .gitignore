@@ -5,3 +5,4 @@
 /dotnet/obj/
 /dotnet/bin/
 /dotnet/.vs/
+/python/src/__pycache__/*.pyc
