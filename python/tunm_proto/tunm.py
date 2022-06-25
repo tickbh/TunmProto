@@ -26,7 +26,6 @@ class TP_DATA_TYPE(IntEnum):
     TYPE_MAP = 17,
     
 class TPPacker:
-    
     @staticmethod
     def get_type_by_ref(ref_type):
         t = type(ref_type)
@@ -174,14 +173,20 @@ class TPPacker:
     
     @staticmethod
     def encode_varint(buffer: ByteBuffer, value):
+        '''
+        如果原数值是正数则将原数值变成value*2
+        如果原数值是负数则将原数值变成-(value + 1) * 2 + 1
+        相当于0->0, -1->1, 1->2,-2->3,2->4来做处理
+        因为小数值是常用的, 所以保证小数值及负数的小数值尽可能的占少位
+        '''
         if type(value) == bool:
             value = 1 if value else 0
-            
         real = value * 2
         if value < 0:
             real = -(value + 1) * 2 + 1
         
         for _i in range(12):
+            # 每个字节的最高位来表示有没有下一位, 若最高位为0, 则已完毕
             b = real & 0x7F
             real >>= 7
             if real > 0:
@@ -225,6 +230,10 @@ class TPPacker:
             
     @staticmethod
     def encode_str_idx(buffer: ByteBuffer, value):
+        '''
+        写入字符串索引值, 在数值区里的所有字符串默认会被写成索引值
+        如果重复的字符串则会返回相同的索引值(varint)
+        '''
         idx = buffer.add_str(value)
         TPPacker.encode_type(buffer, TP_DATA_TYPE.TYPE_STR_IDX)
         TPPacker.encode_varint(buffer, idx)
@@ -243,6 +252,9 @@ class TPPacker:
         
     @staticmethod        
     def encode_field(buffer: ByteBuffer, value, pattern=None):
+        '''
+        先写入类型的值(u8), 则根据类型写入类型对应的的数据
+        '''
         if not pattern:
             pattern = TPPacker.get_type_by_ref(value)
         if pattern == TP_DATA_TYPE.TYPE_NIL:
@@ -278,12 +290,18 @@ class TPPacker:
         
     @staticmethod
     def encode_arr(buffer: ByteBuffer, value):
+        '''
+        写入数组的长度, 再写入各各元素的值
+        '''
         TPPacker.encode_varint(buffer, len(value))
         for v in value:
             TPPacker.encode_field(buffer, v)
             
     @staticmethod
     def encode_map(buffer: ByteBuffer, value):
+        '''
+        写入map的长度, 再分别写入map各元素的key, value值
+        '''
         TPPacker.encode_varint(buffer, len(value))
         for k in value:
             TPPacker.encode_field(buffer, k)
@@ -291,6 +309,9 @@ class TPPacker:
 
     @staticmethod
     def encode_proto(buffer: ByteBuffer, name, infos):
+        '''
+        写入协议名称, 然后写入字符串索引区(即字符串数组), 然后再写入协议的详细数据
+        '''
         sub_buffer = ByteBuffer()
         TPPacker.encode_field(sub_buffer, infos)
 

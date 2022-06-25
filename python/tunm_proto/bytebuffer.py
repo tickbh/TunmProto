@@ -1,11 +1,15 @@
 
 class ByteBuffer(object):
     def __init__(self):
+        # 字节缓冲区
         self.buffer = bytearray([00]*1024)
+        # 写入的位置索引号
         self.wpos = 0
+        # 读出的位置索引号
         self.rpos = 0
+        # 大小端格式
         self.endianness = "little"
-        
+        # 索引的数组及快速查询的字符串索引号
         self.str_arr = []
         self.str_map = {}
 
