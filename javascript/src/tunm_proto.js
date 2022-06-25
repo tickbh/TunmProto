@@ -9,7 +9,8 @@ RtProtoPrototype.decode_varint = function(buffer) {
     var shl_num = 0
     while (true) {
         var data = buffer.readUint8()
-        real += (data & 0x7F) << shl_num
+        // JS整型无法表达U32的数值, 会变成负数
+        real += (data & 0x7F) * 1.0 * (1 << shl_num)
         shl_num += 7
         if((data & 0x80) == 0) {
             break
