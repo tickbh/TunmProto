@@ -291,7 +291,7 @@ class TPPacker:
 
     @staticmethod
     def encode_proto(buffer: ByteBuffer, name, infos):
-        sub_buffer = ByteBuffer.allocate(1024)
+        sub_buffer = ByteBuffer()
         TPPacker.encode_field(sub_buffer, infos)
 
         TPPacker.encode_str_raw(buffer, name, TP_DATA_TYPE.TYPE_STR)

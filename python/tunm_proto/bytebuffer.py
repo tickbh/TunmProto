@@ -36,11 +36,11 @@ class ByteBuffer(object):
     def _ensure_buffer(self, space):
         if len(self.buffer) - self.wpos > space:
             return True
-        now_len = len(self.data)
+        now_len = len(self.buffer)
         if now_len < space:
             now_len += space
         new_data = bytearray([00] * now_len)
-        self.data.extend(new_data)
+        self.buffer.extend(new_data)
         return True
 
     def _read(self, length=1):

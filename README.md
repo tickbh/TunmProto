@@ -1,6 +1,6 @@
 # Tunm
 simple binary proto
-一种对标JSON的二进制数据协议
+一种对标JSON的二进制数据协议, 支持JSON的所有类型的动态组合
 
 ## 支持的数据类型
 基本支持的类型 "u8",   "i8",   "u16",   "i16",   "u32",   "i32", "u64",   "i64", "varint", "float",   "string",  "raw", "array",  "map"
