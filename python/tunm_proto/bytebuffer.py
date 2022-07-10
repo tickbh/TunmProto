@@ -65,11 +65,11 @@ class ByteBuffer(object):
     def read(self, length=1):
         return int.from_bytes(self._read(length=length), byteorder=self.endianness)
 
-    def write(self, value, size=0):
+    def write(self, value, size=0, signed=False):
         from tunm_proto import TP_DATA_TYPE
         t = type(value)
         if t == int:
-            b = int.to_bytes(value, size, byteorder=self.endianness)
+            b = int.to_bytes(value, size, byteorder=self.endianness, signed=signed)
         elif t == TP_DATA_TYPE:
             b = int.to_bytes(int(value), 1, byteorder=self.endianness)
         elif t == list:
@@ -88,7 +88,7 @@ class ByteBuffer(object):
         self.write(value, 1)
         
     def write_i8(self, value):
-        self.write(value, 1)
+        self.write(value, 1, True)
         
     def write_u16(self, value):
         self.write(value, 2)
