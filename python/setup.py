@@ -8,7 +8,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name="tunm_proto",
-    version="0.1.0",
+    version="0.1.2",
     keywords="tunm proto for Python",
     description="a binary proto like json",
     long_description=long_description,
