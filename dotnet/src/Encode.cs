@@ -5,7 +5,7 @@ using System.Collections;
 
 namespace proto.tunm {
 
-    class TunmEncode {
+    public class TunmEncode {
 
         public static void encode_sure_type(ref TunmBuffer buffer, byte value) {
             buffer.write(new byte[1]{value});
@@ -241,6 +241,8 @@ namespace proto.tunm {
                     encode_str_idx(ref buffer, (string)value);
                     break;
                 case TunmValues.TYPE_RAW:
+                    encode_sure_type(ref buffer, TunmValues.TYPE_RAW);
+                    encode_str_raw(ref buffer, value);
                     break;
                 case TunmValues.TYPE_ARR:
                     encode_type(ref buffer, value);

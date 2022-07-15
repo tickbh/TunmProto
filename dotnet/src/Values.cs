@@ -6,7 +6,7 @@ using System.Collections;
 namespace proto.tunm
 {
 
-    class TunmValues
+    public class TunmValues
     {
         public const byte TYPE_NIL = 0;
         public const byte TYPE_BOOL = 1;
@@ -128,6 +128,10 @@ namespace proto.tunm
             if (name == TunmValues.STR_TYPE_STR)
             {
                 builder.AppendFormat("\"{0}\"", (String)obj);
+            }
+            else if (name == TunmValues.STR_TYPE_RAW)
+            {
+                builder.AppendFormat("\"byte[]({0})\"", ((byte[])obj).Length);
             }
             else if (name == TunmValues.STR_TYPE_ARR)
             {
