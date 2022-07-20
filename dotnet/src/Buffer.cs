@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace proto.tunm {
-    class TunmBuffer {
+    public class TunmBuffer {
         byte[] val;
         int rpos;
         int wpos;
