@@ -1,10 +1,10 @@
-var RtProto = function() {
+var RtProto = function () {
     this.is_tunm_proto = true
 };
 
 var RtProtoPrototype = RtProto.prototype;
 
-RtProtoPrototype.decode_varint = function(buffer) {
+RtProtoPrototype.decode_varint = function (buffer) {
     var real = 0
     var shl_num = 0
     while (true) {
@@ -12,7 +12,7 @@ RtProtoPrototype.decode_varint = function(buffer) {
         // JS整型无法表达U32的数值, 会变成负数
         real += (data & 0x7F) * 1.0 * (1 << shl_num)
         shl_num += 7
-        if((data & 0x80) == 0) {
+        if ((data & 0x80) == 0) {
             break
         }
     }
@@ -30,61 +30,65 @@ RtProtoPrototype.decode_type = function (buffer) {
 
 
 RtProtoPrototype.decode_number = function (buffer, pattern) {
-    switch(pattern) {
-    case this.TYPE_U8: {
-        this.td_check_unvaild(buffer, 1);
-        return buffer.readUint8()
-    }
-    case this.TYPE_I8: {
-        this.td_check_unvaild(buffer, 1);
-        return buffer.readInt8()
-    }
-    case this.TYPE_U16: {
-        this.td_check_unvaild(buffer, 2);
-        return buffer.readUint16()
-    }
-    case this.TYPE_I16: {
-        this.td_check_unvaild(buffer, 2);
-        return buffer.readInt16()
-    }
-    case this.TYPE_U32: {
-        this.td_check_unvaild(buffer, 4);
-        return buffer.readUint32()
-    }
-    case this.TYPE_I32: {
-        this.td_check_unvaild(buffer, 4);
-        return buffer.readInt32()
-    }
-    case this.TYPE_FLOAT: {
-        this.td_check_unvaild(buffer, 4);
-        return buffer.readInt32() / 1000.0
-    }
-    default:
-        throw new Error("Unknow decode number type", pattern)
+    switch (pattern) {
+        case this.TYPE_U8: {
+            this.td_check_unvaild(buffer, 1);
+            return buffer.readUint8()
+        }
+        case this.TYPE_I8: {
+            this.td_check_unvaild(buffer, 1);
+            return buffer.readInt8()
+        }
+        case this.TYPE_U16: {
+            this.td_check_unvaild(buffer, 2);
+            return buffer.readUint16()
+        }
+        case this.TYPE_I16: {
+            this.td_check_unvaild(buffer, 2);
+            return buffer.readInt16()
+        }
+        case this.TYPE_U32: {
+            this.td_check_unvaild(buffer, 4);
+            return buffer.readUint32()
+        }
+        case this.TYPE_I32: {
+            this.td_check_unvaild(buffer, 4);
+            return buffer.readInt32()
+        }
+        case this.TYPE_FLOAT: {
+            this.td_check_unvaild(buffer, 4);
+            return buffer.readInt32() / 1000.0
+        }
+        case this.TYPE_DOUBLE: {
+            this.td_check_unvaild(buffer, 4);
+            return buffer.readInt64() / 1000000.0
+        }
+        default:
+            throw new Error("Unknow decode number type", pattern)
     }
 }
 
 RtProtoPrototype.decode_str_raw = function (buffer, pattern) {
-    switch(pattern) {
-    case this.TYPE_STR: {
-        // if(this.td_check_unvaild(buffer, 2)) throw new Error("not vaild size");
-        var length = this.decode_varint(buffer, this.TYPE_U16)
-        if(length == 0) {
-            return ""
+    switch (pattern) {
+        case this.TYPE_STR: {
+            // if(this.td_check_unvaild(buffer, 2)) throw new Error("not vaild size");
+            var length = this.decode_varint(buffer, this.TYPE_U16)
+            if (length == 0) {
+                return ""
+            }
+            if (this.td_check_unvaild(buffer, length)) throw new Error("not vaild size");
+            return buffer.readUTF8String(length, "b")
         }
-        if(this.td_check_unvaild(buffer, length)) throw new Error("not vaild size");
-        return buffer.readUTF8String(length, "b")
-    }
-    case this.TYPE_RAW: {
-        var length = this.decode_varint(buffer, this.TYPE_U16)
-        if(length == 0) {
-            return ""
+        case this.TYPE_RAW: {
+            var length = this.decode_varint(buffer, this.TYPE_U16)
+            if (length == 0) {
+                return ""
+            }
+            if (this.td_check_unvaild(buffer, length)) throw new Error("not vaild size");
+            return buffer.readUTF8String(length)
         }
-        if(this.td_check_unvaild(buffer, length)) throw new Error("not vaild size");
-        return buffer.readUTF8String(length)
-    }
-    default:
-        throw new Error("Unknow decode str type")
+        default:
+            throw new Error("Unknow decode str type")
     }
 }
 
@@ -100,10 +104,10 @@ RtProtoPrototype.read_field = function (buffer) {
 
 RtProtoPrototype.decode_field = function (buffer) {
     var pattern = this.decode_type(buffer)
-    if(pattern == this.TYPE_NIL) {
+    if (pattern == this.TYPE_NIL) {
         return undefined;
     }
-    switch(pattern) {
+    switch (pattern) {
         case this.TYPE_BOOL:
             if (buffer.readInt8() != 0) {
                 return true
@@ -146,7 +150,7 @@ RtProtoPrototype.decode_field = function (buffer) {
 RtProtoPrototype.decode_arr = function (buffer) {
     var size = this.decode_varint(buffer)
     var arr = []
-    for(var idx = 0; idx < size; idx++) {
+    for (var idx = 0; idx < size; idx++) {
         var sub = this.decode_field(buffer)
         arr.push(sub)
     }
@@ -156,7 +160,7 @@ RtProtoPrototype.decode_arr = function (buffer) {
 RtProtoPrototype.decode_map = function (buffer, config) {
     var size = this.decode_varint(buffer)
     var map = {}
-    for(var idx = 0; idx < size; idx++) {
+    for (var idx = 0; idx < size; idx++) {
         var key = this.decode_field(buffer)
         var val = this.decode_field(buffer)
         map[key] = val
@@ -167,13 +171,13 @@ RtProtoPrototype.decode_map = function (buffer, config) {
 RtProtoPrototype.decode_proto = function (buffer, config) {
     var name = this.decode_str_raw(buffer, this.TYPE_STR)
     var str_len = this.decode_varint(buffer)
-    for(var i = 0; i < str_len; i++) {
+    for (var i = 0; i < str_len; i++) {
         var value = this.decode_str_raw(buffer, this.TYPE_STR);
         buffer.add_str(value);
     }
-    
+
     var sub_value = this.decode_field(buffer);
-    return {proto: name, list: sub_value};
+    return { proto: name, list: sub_value };
 }
 
 
@@ -183,33 +187,33 @@ RtProtoPrototype.td_check_vaild = function (buffer, size) {
 }
 
 RtProtoPrototype.td_check_unvaild = function (buffer, size) {
-    if(!this.td_check_vaild(buffer, size)) {
+    if (!this.td_check_vaild(buffer, size)) {
         throw new Error("now vaild buffer size")
     }
     return false
 }
 
-RtProtoPrototype.IsNull = function(value) {
+RtProtoPrototype.IsNull = function (value) {
     return value == null || value == undefined
 }
 
 RtProtoPrototype.get_type_by_ref = function (value) {
-    var type = typeof(value)
+    var type = typeof (value)
     if (type == "boolean") {
         return this.TYPE_BOOL
-    } else if(type == 'string') {
+    } else if (type == 'string') {
         return this.TYPE_STR
-    } else if(type == "number") {
+    } else if (type == "number") {
         var step = value - Math.floor(value)
-        if(step < 0.001) {
+        if (step < 0.001) {
             return this.TYPE_I64
         } else {
             return this.TYPE_FLOAT
         }
-    } else if(type == "object") {
-        if(value instanceof String) {
+    } else if (type == "object") {
+        if (value instanceof String) {
             return this.TYPE_STR
-        } else if(value instanceof Array) {
+        } else if (value instanceof Array) {
             return this.TYPE_ARR
         } else {
             return this.TYPE_MAP
@@ -220,19 +224,19 @@ RtProtoPrototype.get_type_by_ref = function (value) {
 
 
 RtProtoPrototype.encode_varint = function (buffer, value) {
-    var number = parseInt(value) 
-    if(this.IsNull(number)) {
+    var number = parseInt(value)
+    if (this.IsNull(number)) {
         throw new Error("unkown encode number")
     }
     var real = number * 2
-    if(real < 0) {
+    if (real < 0) {
         real = -(number + 1) * 2 + 1
     }
 
-    while(true) {
+    while (true) {
         var data = (real & 0x7F)
         real = real >>> 7
-        if( real == 0) {
+        if (real == 0) {
             buffer.writeUint8(data)
             break
         } else {
@@ -246,7 +250,7 @@ RtProtoPrototype.encode_type = function (buffer, value) {
 }
 
 RtProtoPrototype.encode_bool = function (buffer, value) {
-    if(value) {
+    if (value) {
         buffer.writeUint8(1)
     } else {
         buffer.writeInt8(0)
@@ -255,51 +259,51 @@ RtProtoPrototype.encode_bool = function (buffer, value) {
 
 RtProtoPrototype.encode_number = function (buffer, value, pattern) {
     var number = parseInt(value)
-    if(IsNull(number)) {
+    if (this.IsNull(number)) {
         throw new Error("unkown encode number")
     }
-    switch(pattern) {
-    case this.TYPE_U8: {
-        buffer.writeUint8(number)
-        break;
-    }
-    case this.TYPE_I8: {
-        buffer.writeInt8(number)
-        break;
-    }
-    case this.TYPE_U16: {
-        buffer.writeUint16(number)
-        break;
-    }
-    case this.TYPE_I16: {
-        buffer.writeInt16(number)
-        break;
-    }
-    case this.TYPE_U32: {
-        buffer.writeUint32(number)
-        break;
-    }
-    case this.TYPE_I32: {
-        buffer.writeInt32(number)
-        break;
-    }
-    case this.TYPE_U64: {
-        throw new Error("no support u64")
-    }
-    case this.TYPE_I64: {
-        throw new Error("no support u64")
-    }
-    case this.TYPE_FLOAT: {
-        buffer.writeInt32(parseInt(parseFloat(number) * 1000))
-        break;
-    }
-    case this.TYPE_DOUBLE: {
-        buffer.writeInt32(parseInt(parseFloat(number) * 1000000))
-        break;
-    }
-    default: {
-        throw new Error("unkown encode number")
-    }
+    switch (pattern) {
+        case this.TYPE_U8: {
+            buffer.writeUint8(number)
+            break;
+        }
+        case this.TYPE_I8: {
+            buffer.writeInt8(number)
+            break;
+        }
+        case this.TYPE_U16: {
+            buffer.writeUint16(number)
+            break;
+        }
+        case this.TYPE_I16: {
+            buffer.writeInt16(number)
+            break;
+        }
+        case this.TYPE_U32: {
+            buffer.writeUint32(number)
+            break;
+        }
+        case this.TYPE_I32: {
+            buffer.writeInt32(number)
+            break;
+        }
+        case this.TYPE_U64: {
+            throw new Error("no support u64")
+        }
+        case this.TYPE_I64: {
+            throw new Error("no support u64")
+        }
+        case this.TYPE_FLOAT: {
+            buffer.writeInt32(parseInt(parseFloat(value) * 1000))
+            break;
+        }
+        case this.TYPE_DOUBLE: {
+            buffer.writeInt32(parseInt(parseFloat(value) * 1000000))
+            break;
+        }
+        default: {
+            throw new Error("unkown encode number")
+        }
     }
 }
 
@@ -311,14 +315,15 @@ RtProtoPrototype.encode_str_idx = function (buffer, value) {
 
 
 RtProtoPrototype.encode_str_raw = function (buffer, value, pattern) {
-    switch(pattern) {
+    switch (pattern) {
         case this.TYPE_STR: {
-            this.encode_varint(buffer, value.length)
+
+            this.encode_varint(buffer, ByteBuffer.calculateUTF8Bytes(value))
             buffer.writeString(value)
             break;
         }
         case this.TYPE_RAW: {
-            this.encode_varint(buffer, value.length)
+            this.encode_varint(buffer, ByteBuffer.calculateUTF8Bytes(value))
             buffer.writeString(value)
             break;
         }
@@ -330,14 +335,14 @@ RtProtoPrototype.encode_str_raw = function (buffer, value, pattern) {
 
 RtProtoPrototype.encode_arr = function (buffer, value) {
     this.encode_varint(buffer, value.length)
-    for(var v in value) {
+    for (var v in value) {
         this.encode_field(buffer, value[v])
     }
 }
 
 RtProtoPrototype.encode_map = function (buffer, value) {
     this.encode_varint(buffer, Object.keys(value).length)
-    for(var k in value) {
+    for (var k in value) {
         this.encode_field(buffer, k)
         this.encode_field(buffer, value[k])
     }
@@ -345,57 +350,57 @@ RtProtoPrototype.encode_map = function (buffer, value) {
 
 RtProtoPrototype.encode_field = function (buffer, value) {
     var pattern = this.get_type_by_ref(value)
-    switch(pattern) {
-    case this.TYPE_BOOL:
-        this.encode_type(buffer, pattern);
-        this.encode_bool(buffer, value)
-        break
-    case this.TYPE_U8:
-    case this.TYPE_I8:
-    case this.TYPE_U16:
-    case this.TYPE_I16:
-    case this.TYPE_U32:
-    case this.TYPE_I32:
-    case this.TYPE_I64:
-    case this.TYPE_U64:
-    case this.TYPE_VARINT: {
-        this.encode_type(buffer, this.TYPE_VARINT);
-        this.encode_varint(buffer, value)
-    }
-    break;
-    case this.TYPE_FLOAT: {
-        this.encode_type(buffer, pattern);
-        value = parseInt(value * 1000)
-        this.encode_varint(buffer, value)
-    }
-    break;
-    case this.TYPE_DOUBLE: {
-        this.encode_type(buffer, pattern);
-        value = parseInt(value * 1000000)
-        this.encode_varint(buffer, value)
-    }
-    break;
-    case this.TYPE_STR:{
-        this.encode_str_idx(buffer, value)
-    }
-    break;
-    case this.TYPE_RAW: {
-        this.encode_type(buffer, pattern);
-        this.encode_str_raw(buffer, value)
-    }
-    break;
-    case this.TYPE_ARR: {
-        this.encode_type(buffer, pattern);
-        this.encode_arr(buffer, value)
-    }
-    break;
-    case this.TYPE_MAP: {
-        this.encode_type(buffer, pattern);
-        this.encode_map(buffer, value)
-    }
-    break;
-    default:
-        throw new Error("not found type:", type, " value:", value)
+    switch (pattern) {
+        case this.TYPE_BOOL:
+            this.encode_type(buffer, pattern);
+            this.encode_bool(buffer, value)
+            break
+        case this.TYPE_U8:
+        case this.TYPE_I8:
+        case this.TYPE_U16:
+        case this.TYPE_I16:
+        case this.TYPE_U32:
+        case this.TYPE_I32:
+        case this.TYPE_I64:
+        case this.TYPE_U64:
+        case this.TYPE_VARINT: {
+            this.encode_type(buffer, this.TYPE_VARINT);
+            this.encode_varint(buffer, value)
+        }
+            break;
+        case this.TYPE_FLOAT: {
+            this.encode_type(buffer, pattern);
+            value = parseInt(value * 1000)
+            this.encode_varint(buffer, value)
+        }
+            break;
+        case this.TYPE_DOUBLE: {
+            this.encode_type(buffer, pattern);
+            value = parseInt(value * 1000000)
+            this.encode_varint(buffer, value)
+        }
+            break;
+        case this.TYPE_STR: {
+            this.encode_str_idx(buffer, value)
+        }
+            break;
+        case this.TYPE_RAW: {
+            this.encode_type(buffer, pattern);
+            this.encode_str_raw(buffer, value)
+        }
+            break;
+        case this.TYPE_ARR: {
+            this.encode_type(buffer, pattern);
+            this.encode_arr(buffer, value)
+        }
+            break;
+        case this.TYPE_MAP: {
+            this.encode_type(buffer, pattern);
+            this.encode_map(buffer, value)
+        }
+            break;
+        default:
+            throw new Error("not found type:", type, " value:", value)
     }
     return true
 }
@@ -406,7 +411,7 @@ RtProtoPrototype.encode_proto = function (buffer, name, infos) {
 
     this.encode_str_raw(buffer, name, this.TYPE_STR)
     this.encode_varint(buffer, sub_buffer.str_arr.length)
-    for(var val in sub_buffer.str_arr) {
+    for (var val in sub_buffer.str_arr) {
         this.encode_str_raw(buffer, sub_buffer.str_arr[val], this.TYPE_STR)
     }
 
@@ -455,7 +460,7 @@ RtProtoPrototype.STR_TYPE_ARR = "arr";
 RtProtoPrototype.STR_TYPE_MAP = "map";
 
 RtProtoPrototype.get_type_by_name = function (name) {
-    switch(name) {
+    switch (name) {
         case STR_TYPE_NIL: return this.TYPE_NIL;
         case STR_TYPE_BOOL: return this.TYPE_BOOL;
         case STR_TYPE_U8: return this.TYPE_U8;
@@ -479,7 +484,7 @@ RtProtoPrototype.get_type_by_name = function (name) {
 }
 
 RtProtoPrototype.get_name_by_type = function (index) {
-    switch(index) {
+    switch (index) {
         case this.TYPE_NIL: return STR_TYPE_NIL;
         case this.TYPE_BOOL: return STR_TYPE_BOOL;
         case this.TYPE_U8: return STR_TYPE_U8;

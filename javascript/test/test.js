@@ -68,16 +68,16 @@ function test_encode_u32() {
 
 function test_encode_float() {
     console.log("test_encode_float")
-    var buffer = new ByteBuffer();
+    var buffer = new ByteBuffer(5, true);
 
     var number = 12345.123;
 
     rt.encode_field(buffer, number)
-    rt.encode_field(buffer, number)
-
     buffer.mark(0)
     buffer.reset()
-    test_manual_field(buffer, 12345123, rt.TYPE_FLOAT)
+    
+    // console.log(new Uint8Array(buffer.buffer).subarray(0, 5))
+    // assert_eq(new Uint8Array(buffer.buffer).subarray(0, 5), new Uint8Array([11, 198, 252, 226, 11]))
 
     var value = rt.decode_field(buffer)
     console.assert(value == 12345.123, "Number Not Match");
