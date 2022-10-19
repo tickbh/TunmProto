@@ -195,11 +195,11 @@ pub fn encode_field(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
         }
         | Value::Float(_) => {
             encode_sure_type(buffer, TYPE_FLOAT)?;
-            encode_number(buffer, value)?;
+            encode_varint(buffer, value)?;
         }
         | Value::Double(_) => {
             encode_sure_type(buffer, TYPE_DOUBLE)?;
-            encode_number(buffer, value)?;
+            encode_varint(buffer, value)?;
         }
         Value::Str(ref pattern) => {
             encode_str_idx(buffer, pattern)?;
