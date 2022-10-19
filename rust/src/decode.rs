@@ -179,8 +179,16 @@ fn decode_by_pattern(buffer: &mut Buffer, pattern: &u8) -> RpResult<Value> {
         TYPE_BOOL => {
             decode_bool(buffer, *pattern)
         }
-        TYPE_U8 | TYPE_I8 | TYPE_U16 | TYPE_I16 | TYPE_U32 | TYPE_I32 | TYPE_FLOAT => {
+        TYPE_U8 | TYPE_I8 | TYPE_U16 | TYPE_I16 | TYPE_U32 | TYPE_I32 => {
             decode_number(buffer, *pattern)
+        }
+        TYPE_FLOAT => {
+            let val: i64 = decode_varint(buffer)?.into();
+            Ok(Value::Float(val as f32 / 1000.0))
+        }
+        TYPE_DOUBLE => {
+            let val: i64 = decode_varint(buffer)?.into();
+            Ok(Value::Double(val as f64 / 1000000.0f64))
         }
         TYPE_VARINT => {
             decode_varint(buffer)

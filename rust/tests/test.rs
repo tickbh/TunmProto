@@ -72,7 +72,8 @@ fn test_encode_float() {
     let mut buffer = Buffer::new();
     let value = Value::Float(12345.123);
     tunm::encode_field(&mut buffer, &value).unwrap();
-    assert_eq!(buffer.get_write_data(), [11, 35, 95, 188, 0]);
+    println!("{:?}", buffer.get_write_data());
+    assert_eq!(buffer.get_write_data(), [11, 198, 252, 226, 11]);
 
     // second read field
     let read = tunm::decode_field(&mut buffer).unwrap();
