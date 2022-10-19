@@ -200,9 +200,15 @@ namespace proto.tunm {
                 case TunmValues.TYPE_U32:
                 case TunmValues.TYPE_I64:
                 case TunmValues.TYPE_U64:
-                case TunmValues.TYPE_FLOAT:
-                case TunmValues.TYPE_DOUBLE:
                     return decode_number(ref buffer, pattern);
+                case TunmValues.TYPE_FLOAT: {
+                    var idx = decode_varint(ref buffer);
+                    return idx / 1000.0;
+                }
+                case TunmValues.TYPE_DOUBLE: {
+                    var idx = decode_varint(ref buffer);
+                    return idx / 1000000.0;
+                }
                 case TunmValues.TYPE_VARINT:
                     return decode_varint(ref buffer);
                 case TunmValues.TYPE_STR:
