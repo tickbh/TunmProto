@@ -410,6 +410,19 @@ namespace proto.tunm
             }
             return "";
         }
+        
+        public static byte[] get_bytes(Object obj,string key){
+            var map = get_dictionary(obj);
+            if (map == null)
+            {
+                return null;
+            }
+            if (map.ContainsKey(key))
+            {
+                return (byte[])(map[key]);
+            }
+            return new byte[0];
+        }
 
 
         public static long get_long(Object obj, String key)

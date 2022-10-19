@@ -230,11 +230,11 @@ namespace proto.tunm {
                     break;
                 case TunmValues.TYPE_FLOAT:
                     encode_sure_type(ref buffer, TunmValues.TYPE_FLOAT);
-                    encode_number(ref buffer, value);
+                    encode_varint(ref buffer, value);
                     break;
                 case TunmValues.TYPE_DOUBLE:
                     encode_sure_type(ref buffer, TunmValues.TYPE_DOUBLE);
-                    encode_number(ref buffer, value);
+                    encode_varint(ref buffer, value);
                     break;
 
                 case TunmValues.TYPE_STR:

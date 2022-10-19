@@ -185,7 +185,7 @@ namespace proto.tunm {
         public static void test_encode_float() {
             var buffer = new TunmBuffer();
             TunmEncode.encode_field(ref buffer, (float)12345.123);
-            assert_eq(buffer.get_write_data(), new byte[]{11, 35, 95, 188, 0});
+            assert_eq(buffer.get_write_data(), new byte[]{11, 198, 252, 226, 11});
             var read = TunmDecode.decode_field(ref buffer);
             assert_eq(read, (float) 12345.123);
             Console.WriteLine("test_encode_float success");
