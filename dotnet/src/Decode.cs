@@ -6,7 +6,7 @@ using System.Collections;
 
 namespace proto.tunm {
 
-    class TunmDecode {
+    public class TunmDecode {
 
         public static bool check_vaild(ref TunmBuffer buffer, int size) {
             if(buffer.data_len() < size) {
@@ -203,7 +203,7 @@ namespace proto.tunm {
                     return decode_number(ref buffer, pattern);
                 case TunmValues.TYPE_FLOAT: {
                     var idx = decode_varint(ref buffer);
-                    return idx / 1000.0;
+                    return (float)(idx / 1000.0);
                 }
                 case TunmValues.TYPE_DOUBLE: {
                     var idx = decode_varint(ref buffer);
