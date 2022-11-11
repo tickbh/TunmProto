@@ -107,7 +107,7 @@ pub fn encode_varint(buffer: &mut Buffer, value: &Value) -> RpResult<()> {
             val as i64
         }
         Value::Float(val) => {
-            let val = (val * 1000.0) as i32;
+            let val = (val * 1000.0) as i64;
             val as i64
         }
         Value::Double(val) => {
