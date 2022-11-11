@@ -81,6 +81,16 @@ fn test_encode_float() {
         Value::Float(val) => assert_eq!(val, 12345.123),
         _ => unreachable!("it will not read"),
     }
+
+    
+    let value = Value::Float(9826400.123);
+    tunm::encode_field(&mut buffer, &value).unwrap();
+    let read = tunm::decode_field(&mut buffer).unwrap();
+    match read {
+        Value::Float(val) => assert_eq!(val, 9826400.123),
+        _ => unreachable!("it will not read"),
+    }
+
 }
 
 #[test]
