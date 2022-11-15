@@ -1,7 +1,7 @@
 extern crate tunm_proto as tunm;
 use tunm::{Value, Buffer};
 
-use std::collections::{HashMap};
+use std::{collections::{HashMap}, io::{Write, Read}};
 
 #[test]
 fn test_encode_u8() {
@@ -171,4 +171,31 @@ fn test_base_proto() {
             }
         }
     }
+}
+
+
+#[test]
+fn test_buffer_size() {
+    let mut buffer = Buffer::new();
+    assert!(buffer.len() == 2048);
+
+    let mut bytes_1024 = [0u8; 1024];
+    let mut bytes_2048 = [0u8; 2048];
+    buffer.write(&bytes_1024).ok().unwrap();
+    buffer.write(&bytes_1024).ok().unwrap();
+    assert!(buffer.len() == 2048);
+    buffer.write(&bytes_1024).ok().unwrap();
+    assert!(buffer.len() == 6144);
+    buffer.write(&bytes_1024).ok().unwrap();
+    buffer.write(&bytes_2048).ok().unwrap();
+    assert!(buffer.len() == 6144);
+    buffer.read(&mut bytes_2048).ok().unwrap();
+    buffer.read(&mut bytes_1024).ok().unwrap();
+    assert!(buffer.len() == 6144);
+    buffer.write(&bytes_2048).ok().unwrap();
+    buffer.write(&bytes_1024).ok().unwrap();
+    assert!(buffer.len() == 6144);
+    assert!(buffer.data_len() == 6144);
+    buffer.write(&bytes_1024).ok().unwrap();
+    assert!(buffer.len() == (6144 + 1024) * 2);
 }

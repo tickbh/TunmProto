@@ -158,6 +158,10 @@ impl Read for Buffer {
         if self.rpos >= self.wpos {
             self.rpos = 0;
             self.wpos = 0;
+
+            if self.val.len() > 204800 {
+                self.val.resize(204800, 0);
+            }
         }
         Ok(read)
     }
@@ -169,7 +173,14 @@ impl Write for Buffer {
     #[inline(always)]
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         if self.val.len() < self.wpos + buf.len() {
-            self.val.resize((self.wpos + buf.len()) * 2, 0);
+            if self.wpos + buf.len() - self.rpos < self.val.len() && self.rpos >= self.wpos - self.rpos  {
+                unsafe {
+                    ptr::copy(&self.val[self.rpos], &mut self.val[0], self.wpos - self.rpos);
+                    (self.rpos, self.wpos) = (0, self.wpos - self.rpos)
+                }
+            } else {
+                self.val.resize((self.wpos + buf.len()) * 2, 0);
+            }
         }
         if buf.len() == 0 {
             return Ok(buf.len());
