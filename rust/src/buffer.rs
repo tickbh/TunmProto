@@ -159,8 +159,8 @@ impl Read for Buffer {
             self.rpos = 0;
             self.wpos = 0;
 
-            if self.val.len() > 204800 {
-                self.val.resize(204800, 0);
+            if self.val.len() > 2048000 {
+                self.val.resize(2048000, 0);
             }
         }
         Ok(read)
