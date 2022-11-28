@@ -4,6 +4,8 @@ use std::ptr;
 use std::fmt;
 use std::cmp;
 
+use log::{warn, info};
+
 use crate::{ErrorKind, RpResult};
 
 pub struct Buffer {
@@ -159,8 +161,9 @@ impl Read for Buffer {
             self.rpos = 0;
             self.wpos = 0;
 
-            if self.val.len() > 2048000 {
-                self.val.resize(2048000, 0);
+            if self.val.len() > 512000 {
+                self.val.resize(512000, 0);
+                warn!("TunmProto: buffer len big than 512k, resize to 512k");
             }
         }
         Ok(read)
@@ -173,13 +176,18 @@ impl Write for Buffer {
     #[inline(always)]
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         if self.val.len() < self.wpos + buf.len() {
-            if self.wpos + buf.len() - self.rpos < self.val.len() && self.rpos >= self.wpos - self.rpos  {
+            let left_len = self.wpos + buf.len() - self.rpos;
+            if left_len < self.val.len() && self.rpos >= self.wpos - self.rpos  {
                 unsafe {
                     ptr::copy(&self.val[self.rpos], &mut self.val[0], self.wpos - self.rpos);
+                    info!("TunmProto: write {} has space so move position", left_len);
                     (self.rpos, self.wpos) = (0, self.wpos - self.rpos)
                 }
             } else {
                 self.val.resize((self.wpos + buf.len()) * 2, 0);
+                if self.val.len() > 512000 {
+                    warn!("TunmProto: resize buffer length to {:?}k", self.val.len() / 1024);
+                }
             }
         }
         if buf.len() == 0 {

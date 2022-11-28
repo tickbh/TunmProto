@@ -1,6 +1,6 @@
 [package]
 name = "tunm_proto"
-version = "0.1.15"
+version = "0.1.16"
 edition = "2021"
 authors = [ "tickbh <tickdream125@hotmail.com>" ]
 
@@ -13,8 +13,9 @@ keywords = ["protocol", "GoogleProtocolBuffer"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+log="0.4.17"
 
-# [dev-dependencies]
-# serde = "1.0.117"
-# serde_derive = "1.0.117"
-# serde_json = "1.0.59"
+[dev-dependencies]
+serde = "1.0.117"
+serde_derive = "1.0.117"
+serde_json = "1.0.59"
