@@ -105,13 +105,16 @@ impl Buffer {
         self.wpos = self.wpos - cmp::min(self.wpos, pos);
         let pos = cmp::min(self.val.len(), pos);
         self.val.drain(..pos);
+        self.fix_buffer();
     }
 
     pub fn drain_collect(&mut self, pos: usize) -> Vec<u8> {
         self.rpos = self.rpos - cmp::min(self.rpos, pos);
         self.wpos = self.wpos - cmp::min(self.wpos, pos);
         let pos = cmp::min(self.val.len(), pos);
-        self.val.drain(..pos).collect()
+        let ret = self.val.drain(..pos).collect();
+        self.fix_buffer();
+        ret
     }
     
     pub fn drain_all_collect(&mut self) -> Vec<u8> {
