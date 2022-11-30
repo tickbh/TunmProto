@@ -96,13 +96,8 @@ impl Buffer {
     
     pub fn read_offset(&mut self, pos: usize) -> bool {
         self.rpos = self.rpos + pos;
-        if self.rpos == self.wpos {
-            self.rpos = 0;
-            self.wpos = 0;
-            true
-        } else {
-            false
-        }
+        self.fix_buffer();
+        self.rpos == self.wpos
     }
 
     pub fn drain(&mut self, pos: usize) {
@@ -123,6 +118,27 @@ impl Buffer {
         let (rpos, wpos) = (self.rpos, self.wpos);
         self.clear();
         self.val.drain(rpos..wpos).collect()
+    }
+
+    pub fn fix_buffer(&mut self) -> bool {
+        if self.rpos >= self.wpos {
+            self.rpos = 0;
+            self.wpos = 0;
+
+            if self.val.len() > 512000 {
+                self.val.resize(512000, 0);
+                warn!("TunmProto: buffer len big than 512k, resize to 512k");
+            } else {
+                info!("TunmProto: read all size, reset to zero");
+            }
+        } else if self.rpos > self.val.len() / 2 {
+            unsafe {
+                ptr::copy(&self.val[self.rpos], &mut self.val[0], self.wpos - self.rpos);
+                info!("TunmProto: fix buffer {} has half space so move position", self.rpos);
+                (self.rpos, self.wpos) = (0, self.wpos - self.rpos);
+            }
+        }
+        true
     }
 
     pub fn clear(&mut self) {
@@ -157,15 +173,6 @@ impl Read for Buffer {
             ptr::copy(&self.val[self.rpos], &mut buf[0], read);
         }
         self.rpos += read;
-        if self.rpos >= self.wpos {
-            self.rpos = 0;
-            self.wpos = 0;
-
-            if self.val.len() > 512000 {
-                self.val.resize(512000, 0);
-                warn!("TunmProto: buffer len big than 512k, resize to 512k");
-            }
-        }
         Ok(read)
     }
 
@@ -176,18 +183,9 @@ impl Write for Buffer {
     #[inline(always)]
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         if self.val.len() < self.wpos + buf.len() {
-            let left_len = self.wpos + buf.len() - self.rpos;
-            if left_len < self.val.len() && self.rpos >= self.wpos - self.rpos  {
-                unsafe {
-                    ptr::copy(&self.val[self.rpos], &mut self.val[0], self.wpos - self.rpos);
-                    info!("TunmProto: write {} has space so move position", left_len);
-                    (self.rpos, self.wpos) = (0, self.wpos - self.rpos)
-                }
-            } else {
-                self.val.resize((self.wpos + buf.len()) * 2, 0);
-                if self.val.len() > 512000 {
-                    warn!("TunmProto: resize buffer length to {:?}k", self.val.len() / 1024);
-                }
+            self.val.resize((self.wpos + buf.len()) * 2, 0);
+            if self.val.len() > 512000 {
+                warn!("TunmProto: resize buffer length to {:?}k", self.val.len() / 1024);
             }
         }
         if buf.len() == 0 {

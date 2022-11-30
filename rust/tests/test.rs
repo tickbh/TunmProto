@@ -191,8 +191,11 @@ fn test_buffer_size() {
     assert!(buffer.len() == 6144);
     buffer.read(&mut bytes_2048).ok().unwrap();
     buffer.read(&mut bytes_1024).ok().unwrap();
+    buffer.read(&mut bytes_1024).ok().unwrap();
     assert!(buffer.len() == 6144);
+    buffer.fix_buffer();
     buffer.write(&bytes_2048).ok().unwrap();
+    buffer.write(&bytes_1024).ok().unwrap();
     buffer.write(&bytes_1024).ok().unwrap();
     assert!(buffer.len() == 6144);
     assert!(buffer.data_len() == 6144);
