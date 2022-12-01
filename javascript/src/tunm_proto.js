@@ -10,7 +10,7 @@ RtProtoPrototype.decode_varint = function (buffer) {
     while (true) {
         var data = buffer.readUint8()
         // JS整型无法表达U32的数值, 会变成负数
-        real += (data & 0x7F) * 1.0 * (1 << shl_num)
+        real += (data & 0x7F) * 1.0 * (Math.pow(2, shl_num))
         shl_num += 7
         if ((data & 0x80) == 0) {
             break
@@ -18,9 +18,9 @@ RtProtoPrototype.decode_varint = function (buffer) {
     }
     var is_left = real % 2 == 1
     if (is_left) {
-        return -parseInt(real / 2) - 1
+        return -Math.floor(real / 2) - 1
     } else {
-        return parseInt(real / 2)
+        return Math.floor(real / 2)
     }
 }
 
@@ -222,9 +222,10 @@ RtProtoPrototype.get_type_by_ref = function (value) {
     return this.TYPE_NIL
 }
 
+RtProtoPrototype.right_shift = 128
 
 RtProtoPrototype.encode_varint = function (buffer, value) {
-    var number = parseInt(value)
+    var number = value
     if (this.IsNull(number)) {
         throw new Error("unkown encode number")
     }
@@ -235,8 +236,8 @@ RtProtoPrototype.encode_varint = function (buffer, value) {
 
     while (true) {
         var data = (real & 0x7F)
-        real = real >>> 7
-        if (real == 0) {
+        real = real / this.right_shift
+        if (Math.floor(real) == 0) {
             buffer.writeUint8(data)
             break
         } else {
