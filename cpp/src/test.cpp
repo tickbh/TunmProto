@@ -121,58 +121,50 @@ void test_encode_map() {
 	//value_map.unfree();
 	std::cout << "success test test_encode_map" << std::endl;
 }
-//
-//void test_encode_array_u8() {
-//	auto config = tunm_cpp::Config();
-//	auto buffer = tunm_cpp::Buffer();
-//	std::vector<tunm_cpp::Values> u8array;
-//	for (int i = 0; i < 10; i++) {
-//		u8array.push_back(tunm_cpp::Values((u8)i));
-//	}
-//	auto array = tunm_cpp::Values(&u8array, tunm_cpp::TYPE_AU8);
-//	tunm_cpp::encode_field(buffer, config, array);
-//
-//	auto read = tunm_cpp::decode_field(buffer, config);
-//	assert(read.sub_type == tunm_cpp::TYPE_AU8);
-//	auto i = 0;
-//	for (auto& iter : *read._array) {
-//		assert(iter._u8 == (u8)i++);
-//	}
-//	array.unfree();
-//	std::cout << "success test test_encode_array_u8" << std::endl;
-//}
-//
-//void test_base_proto() {
-//	std::map<std::string, tunm_cpp::Field> fields = {
-//		{ "name", tunm_cpp::Field(1, "string") },
-//		{ "index", tunm_cpp::Field(2, "u16") },
-//	};
-//	std::map<std::string, tunm_cpp::Proto> protos = {
-//		{ "cmd_test_op", tunm_cpp::Proto("server", { "map" }) },
-//	};
-//	auto config = tunm_cpp::Config(fields, protos);
-//	auto buffer = tunm_cpp::Buffer();
-//
-//	std::map<std::string, tunm_cpp::Values>* hash_value = new std::map<std::string, tunm_cpp::Values>();
-//	hash_value->insert(std::make_pair("name", tunm_cpp::Values(new std::string("I'm a chinese people"))));
-//	hash_value->insert(std::make_pair("sub_name", tunm_cpp::Values(new std::string("tickdream"))));
-//	hash_value->insert(std::make_pair("index", tunm_cpp::Values((u16)1)));
-//
-//	auto value_map = tunm_cpp::Values(hash_value);
-//	std::vector<tunm_cpp::Values> array;
-//	array.push_back(std::move(value_map));
-//	tunm_cpp::encode_proto(buffer, config, "cmd_test_op", array);
-//
-//	std::vector<tunm_cpp::Values> val;
-//	auto ret = tunm_cpp::decode_proto(buffer, config, val);
-//	assert(buffer.isVaild());
-//	assert(ret == "cmd_test_op");
-//	assert(val.size() == 1);
-//	assert(val.at(0)._map->size() == 2);
-//	assert(strcmp(val.at(0)._map->at("name")._str->c_str(), hash_value->at("name")._str->c_str()) == 0);
-//	assert(val.at(0)._map->at("index")._u16 == hash_value->at("index")._u16);
-//	std::cout << "success test test_base_proto" << std::endl;
-//}
+
+void test_encode_array_u8() {
+	auto buffer = tunm_cpp::Buffer();
+	std::vector<tunm_cpp::Values> u8array;
+	for (int i = 0; i < 10; i++) {
+		u8array.push_back(tunm_cpp::Values((u8)i));
+	}
+	auto array = tunm_cpp::Values(&u8array);
+	tunm_cpp::encode_field(buffer, array);
+
+	auto read = tunm_cpp::decode_field(buffer);
+	assert(read.sub_type == tunm_cpp::TYPE_ARR);
+	auto i = 0;
+	for (auto& iter : *read._array) {
+		assert(iter._u8 == (u8)i++);
+	}
+	array.unfree();
+	std::cout << "success test test_encode_array_u8" << std::endl;
+}
+
+void test_base_proto() {
+
+	auto buffer = tunm_cpp::Buffer();
+
+	std::unordered_map<tunm_cpp::Values, tunm_cpp::Values>* hash_value = new std::unordered_map<tunm_cpp::Values, tunm_cpp::Values>();
+	hash_value->insert(std::make_pair(tunm_cpp::Values("name"), tunm_cpp::Values(new std::string("tunm"))));
+	hash_value->insert(std::make_pair(tunm_cpp::Values("sub_name"), tunm_cpp::Values(new std::string("tickdream"))));
+	hash_value->insert(std::make_pair(tunm_cpp::Values("index"), tunm_cpp::Values((u16)1)));
+
+	auto value_map = tunm_cpp::Values(hash_value);
+	std::vector<tunm_cpp::Values> array;
+	array.push_back(std::move(value_map));
+	tunm_cpp::encode_proto(buffer, "cmd_test_op", array);
+
+	std::string name;
+	std::vector<tunm_cpp::Values> val = tunm_cpp::decode_proto(buffer, name);
+	assert(buffer.isVaild());
+	assert(name == "cmd_test_op");
+	assert(val.size() == 1);
+	assert(val.at(0)._map->size() == 3);
+	assert(strcmp(val.at(0)._map->at(tunm_cpp::Values("name"))._str->c_str(), hash_value->at(tunm_cpp::Values("name"))._str->c_str()) == 0);
+	assert(val.at(0)._map->at(tunm_cpp::Values("index"))._u16 == hash_value->at(tunm_cpp::Values("index"))._u16);
+	std::cout << "success test test_base_proto" << std::endl;
+}
 
 int main(int argc, char *argv[]) {
 
@@ -184,11 +176,8 @@ int main(int argc, char *argv[]) {
 	test_encode_float();
 	test_encode_str();
 	test_encode_map();
-	//test_encode_array_u8();
-	//test_base_proto();
-
+	test_encode_array_u8();
+	test_base_proto();
 
 	std::cout << "------ success test proto cpp ------" << std::endl;
-	//std::string aa;
-	//std::cin >> aa;
 }

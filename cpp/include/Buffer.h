@@ -399,8 +399,9 @@ namespace tunm_cpp
 
 		bool extend(Buffer& buffer) {
 			u32 count = 0;
-			auto data = this->get_write_data(count);
+			auto data = buffer.get_write_data(count);
 			this->append(data, count);
+			return true;
 		}
 
 		void hexlike() const

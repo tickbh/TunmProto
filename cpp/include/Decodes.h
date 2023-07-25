@@ -179,7 +179,7 @@ namespace tunm_cpp {
 		case TYPE_ARR:
 			return decode_arrays(buffer);
 		default:
-			std::terminate();
+			return  Values();
 		}
 	}
 
@@ -202,7 +202,7 @@ namespace tunm_cpp {
 		name = *name_value._str;
 		auto sub_value = decode_field(buffer);
 		if (sub_value.sub_type == TYPE_ARR) {
-			//return *sub_value._array;
+			return std::move(*sub_value._array);
 		}
 		return std::vector<Values>();
 
