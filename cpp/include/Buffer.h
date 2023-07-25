@@ -393,7 +393,7 @@ namespace tunm_cpp
 		}
 
 		const u8* get_write_data(u32& count) {
-			count = this->_wpos - this->_rpos + 1;
+			count = this->_wpos - this->_rpos;
 			return &this->_storage[this->_rpos];
 		}
 

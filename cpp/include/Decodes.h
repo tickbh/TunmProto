@@ -13,7 +13,39 @@ namespace tunm_cpp {
 	break; \
 }
 
-	static Values decode_field(Buffer& buffer, Config& config);
+	static Values decode_field(Buffer& buffer);
+
+	static Values decode_varint(Buffer& buffer) {
+		u64 real = 0;
+		int shl_num = 0;
+		while (true) {
+			CHECK_BREAK_BUFFER_VAILD();
+			auto data = buffer.read<u8>();
+			u64 read = data & 0x7F;
+			real += read << shl_num;
+			shl_num += 7;
+			if ((data & 0x80) == 0) {
+				break;
+			}
+		}
+		bool is_neg = real % 2 == 1;
+		if (is_neg) {
+			return Values(-(real / 2) - 1, true);
+		} else {
+			return Values(real / 2, true);
+		}
+	}
+
+	static Values decode_type(Buffer& buffer) {
+		CHECK_RETURN_BUFFER_VAILD(Values());
+		return Values(buffer.read<u8>());
+	}
+
+
+	static Values decode_bool(Buffer& buffer) {
+		CHECK_RETURN_BUFFER_VAILD(Values());
+		return Values(buffer.read<u8>() == 1 ? true : false);
+	}
 
 	static Values decode_number(Buffer& buffer, u16 pattern) {
 		CHECK_RETURN_BUFFER_VAILD(Values());
@@ -31,9 +63,20 @@ namespace tunm_cpp {
 			return Values(buffer.read<u32>());
 		case TYPE_I32:
 			return Values(buffer.read<i32>());
+		case TYPE_U64:
+			return Values(buffer.read<u64>());
+		case TYPE_I64:
+			return Values(buffer.read<i64>());
 		case TYPE_FLOAT: {
-			float value = (float)(buffer.read<i32>() / 1000.0);
+			float value = (float)(decode_varint(buffer)._varint / 1000.0);
 			return Values(value);
+		}
+		case TYPE_DOUBLE: {
+			double value = (double)(decode_varint(buffer)._varint / 1000000.0);
+			return Values(value);
+		}
+		case TYPE_VARINT: {
+			return decode_varint(buffer);
 		}
 		default:
 			std::terminate();
@@ -41,20 +84,13 @@ namespace tunm_cpp {
 		}
 		return Values();
 	}
-	
-	static Field read_field(Buffer& buffer) {
-		CHECK_RETURN_BUFFER_VAILD(Field(0, STR_TYPE_NIL));
-		auto index = decode_number(buffer, TYPE_U16)._u16;
-		auto pattern = decode_number(buffer, TYPE_U16)._u16;
-		return Field(index, get_name_by_type(pattern));
-	}
 
 	static Values decode_str_raw(Buffer& buffer, u16 pattern) {
 		CHECK_RETURN_BUFFER_VAILD(Values());
 		switch (pattern)
 		{
 		case TYPE_STR: {
-			u16 len = decode_number(buffer, TYPE_U16)._u16;
+			u16 len = decode_varint(buffer)._varint;
 			if( len == 0 ) {
 				return Values(new std::string());
 			}
@@ -66,7 +102,7 @@ namespace tunm_cpp {
 			return Values(str);
 		}
 		case TYPE_RAW: {
-			u16 len = decode_number(buffer, TYPE_U16)._u16;
+			u16 len = decode_varint(buffer)._varint;
 			if (len == 0) {
 				return Values(new std::vector<char>());
 			}
@@ -85,108 +121,90 @@ namespace tunm_cpp {
 		return Values();
 	}
 
-	static Values decode_map(Buffer& buffer, Config& config) {
+	static Values decode_map(Buffer& buffer) {
 		CHECK_RETURN_BUFFER_VAILD(Values());
-		auto map = new std::map<std::string, Values>();
-		while (true) {
-			auto field = read_field(buffer);
-			if (field.is_nil_type()) {
-				return Values(map);
-			}
+		auto map = new std::unordered_map<Values, Values>();
+		auto len = decode_varint(buffer)._varint;
+		for (auto i = 0; i < len; i++) {
+			auto key = decode_field(buffer);
+			auto sub_value = decode_field(buffer);
 			CHECK_RETURN_BUFFER_VAILD(Values(map));
-			auto sub_value = decode_field(buffer, config);
-			auto name = config.get_field_index_name(field.index);
-			if ( name.size() == 0 ) {
-				continue;
-			}
-			map->insert(std::make_pair(name, std::move(sub_value)));
+			map->insert(std::make_pair(std::move(key), std::move(sub_value)));
 		}
-		return Values();
+		return Values(map);
 	}
 
-	static Values decode_arrays(Buffer& buffer, Config& config, u16 pattern, u16 sub_type) {
+	static Values decode_arrays(Buffer& buffer) {
 		CHECK_RETURN_BUFFER_VAILD(Values());
-		auto value = new std::vector<Values>();
-		while (true) {
-			auto sub_value = decode_field(buffer, config);
-			if (sub_value.sub_type == TYPE_NIL) {
-				break;
-			}
-			if (sub_value.sub_type != sub_type) {
-				buffer.setVaild(false);
-				break;
-			}
-			CHECK_BREAK_BUFFER_VAILD();
-			value->push_back(std::move(sub_value));
+		auto vec = new std::vector<Values>();
+		auto len = decode_varint(buffer)._varint;
+		for (auto i = 0; i < len; i++) {
+			auto val = decode_field(buffer);
+			CHECK_RETURN_BUFFER_VAILD(Values(vec));
+			vec->push_back(std::move(val));
 		}
-		return Values(value, (u8)pattern);
+		return Values(vec);
 	}
 
-	static Values decode_by_field(Buffer& buffer, Config& config, Field& field) {
+	static Values decode_by_pattern(Buffer& buffer, u8 pattern) {
 		CHECK_RETURN_BUFFER_VAILD(Values());
-		auto t = get_type_by_name(field.pattern.c_str());
-		switch (t)
+		switch (pattern)
 		{
+		case TYPE_BOOL:
+			return decode_bool(buffer);
 		case TYPE_U8:
 		case TYPE_I8:
 		case TYPE_U16:
 		case TYPE_I16:
 		case TYPE_U32:
 		case TYPE_I32:
+		case TYPE_U64:
+		case TYPE_I64:
 		case TYPE_FLOAT:
-			return decode_number(buffer, t);
+		case TYPE_DOUBLE:
+		case TYPE_VARINT:
+			return decode_number(buffer, pattern);
+		case TYPE_STR_IDX: {
+			u16 idx = (u16)decode_varint(buffer)._varint;
+			if (buffer.get_str(idx)) {
+				return Values(buffer.cacheStr);
+			}
+			return  Values();
+		}
 		case TYPE_STR:
 		case TYPE_RAW:
-			return decode_str_raw(buffer, t);
+			return decode_str_raw(buffer, pattern);
 		case TYPE_MAP:
-			return decode_map(buffer, config);
-		case TYPE_AU8:
-		case TYPE_AI8:
-		case TYPE_AU16:
-		case TYPE_AI16:
-		case TYPE_AU32:
-		case TYPE_AI32:
-		case TYPE_AFLOAT:
-		case TYPE_ASTR:
-		case TYPE_ARAW:
-		case TYPE_AMAP:
-			return decode_arrays(buffer, config, t, t + TYPE_U8 - TYPE_AU8);
+			return decode_map(buffer);
+		case TYPE_ARR:
+			return decode_arrays(buffer);
 		default:
 			std::terminate();
 		}
 	}
 
-	static Values decode_field(Buffer& buffer, Config& config) {
+	static Values decode_field(Buffer& buffer) {
 		CHECK_RETURN_BUFFER_VAILD(Values());
-		auto field = read_field(buffer);
-		if (field.is_nil_type()) {
+		auto val = decode_type(buffer);
+		if (val.sub_type == TYPE_NIL) {
 			return Values();
 		}
-		return decode_by_field(buffer, config, field);
+		return decode_by_pattern(buffer, val._u8);
 	}
 
-	static std::string decode_proto(Buffer& buffer, Config& config, std::vector<Values>& result) {
+	static std::vector<Values> decode_proto(Buffer& buffer, std::string& name) {
 		auto name_value = decode_str_raw(buffer, TYPE_STR);
-		while (true)
-		{
-			auto sub_value = decode_field(buffer, config);
-			if (sub_value.sub_type == TYPE_NIL) {
-				break;
-			}
-			CHECK_BREAK_BUFFER_VAILD();
-			result.push_back(std::move(sub_value));
+		auto len = decode_varint(buffer)._varint;
+		for (auto i = 0; i < len; i++) {
+			auto value = decode_str_raw(buffer, TYPE_STR);
+			buffer.add_str(*value._str);
 		}
-
-		auto proto = config.get_proto_by_name(*name_value._str);
-		if (proto == NULL) {
-			buffer.setVaild(false);
-			return *name_value._str;
+		name = *name_value._str;
+		auto sub_value = decode_field(buffer);
+		if (sub_value.sub_type == TYPE_ARR) {
+			//return *sub_value._array;
 		}
-		if (proto->args.size() != result.size()) {
-			buffer.setVaild(false);
-			return *name_value._str;
-		}
-		return *name_value._str;
+		return std::vector<Values>();
 
 	}
 

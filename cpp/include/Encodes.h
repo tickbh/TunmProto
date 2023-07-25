@@ -95,15 +95,6 @@ namespace tunm_cpp {
 		return true;
 	}
 
-	static bool write_field(Buffer& buffer, Field* field) {
-		if (field == nullptr) {
-			return false;
-		}
-		encode_number(buffer, Values((u16)field->index));
-		encode_number(buffer, Values((u16)get_type_by_name(field->pattern.c_str())));
-		return true;
-	}
-
 	static bool encode_str_idx(Buffer& buffer, const std::string& str) {
 		u16 idx = buffer.add_str(str);
 		encode_sure_type(buffer, TYPE_STR_IDX);
@@ -115,11 +106,11 @@ namespace tunm_cpp {
 		switch (value.sub_type)
 		{
 		case TYPE_STR:
-			encode_number(buffer, Values((u16)value._str->size()));
+			encode_varint(buffer, Values((u16)value._str->size()));
 			buffer.append(value._str->c_str(), value._str->size());
 			break;
 		case TYPE_RAW:
-			encode_number(buffer, Values((u16)value._raw->size()));
+			encode_varint(buffer, Values((u16)value._raw->size()));
 			buffer.append(&value._raw[0], value._raw->size());
 			break;
 		default:
@@ -154,60 +145,61 @@ namespace tunm_cpp {
 	static bool encode_field(Buffer& buffer, const Values& value) {
 		switch (value.sub_type)
 		{
-		case TYPE_BOOL: {
-			encode_type(buffer, value);
-			encode_bool(buffer, value);
-		}break;
+			case TYPE_BOOL: {
+				encode_type(buffer, value);
+				encode_bool(buffer, value);
+			}break;
 
-		case TYPE_U8:
-		case TYPE_I8:
-		{
-			encode_type(buffer, value);
-			encode_number(buffer, value);
-		}break;
-		case TYPE_U16:
-		case TYPE_I16:
-		case TYPE_U32:
-		case TYPE_I32:
-		case TYPE_U64:
-		case TYPE_I64:
-		case TYPE_VARINT: {
-			encode_sure_type(buffer, TYPE_VARINT);
-			encode_varint(buffer, value);
-		}
-			break;
-		case TYPE_FLOAT: {
-			encode_sure_type(buffer, TYPE_FLOAT);
-			encode_varint(buffer, value);
-		}
-			break;
-		case TYPE_DOUBLE: {
-			encode_sure_type(buffer, TYPE_DOUBLE);
-			encode_varint(buffer, value);
-		}
-			break;
-		case TYPE_STR: {
-			encode_str_idx(buffer, *value._str);
-		}
-			break;
-		case TYPE_RAW:
-			encode_type(buffer, value);
-			encode_str_raw(buffer, value);
-			break;
-		case TYPE_MAP:
-			encode_type(buffer, value);
-			encode_map(buffer, value);
-			break;
-		case TYPE_ARR: {
-			encode_type(buffer, value);
-			encode_varint(buffer, Values((u16)value._array->size()));
-			for(auto& v : *value._array) {
-				encode_field(buffer, v);
+			case TYPE_U8:
+			case TYPE_I8:
+			{
+				encode_type(buffer, value);
+				encode_number(buffer, value);
+			}break;
+			case TYPE_U16:
+			case TYPE_I16:
+			case TYPE_U32:
+			case TYPE_I32:
+			case TYPE_U64:
+			case TYPE_I64:
+			case TYPE_VARINT: {
+				encode_sure_type(buffer, TYPE_VARINT);
+				encode_varint(buffer, value);
 			}
-			break;
-		default:
-			encode_sure_type(buffer, TYPE_NIL);
-			break;
+							break;
+			case TYPE_FLOAT: {
+				encode_sure_type(buffer, TYPE_FLOAT);
+				encode_varint(buffer, value);
+			}
+						   break;
+			case TYPE_DOUBLE: {
+				encode_sure_type(buffer, TYPE_DOUBLE);
+				encode_varint(buffer, value);
+			}
+							break;
+			case TYPE_STR: {
+				encode_str_idx(buffer, *value._str);
+			}
+						 break;
+			case TYPE_RAW:
+				encode_type(buffer, value);
+				encode_str_raw(buffer, value);
+				break;
+			case TYPE_MAP:
+				encode_type(buffer, value);
+				encode_map(buffer, value);
+				break;
+			case TYPE_ARR: {
+				encode_type(buffer, value);
+				encode_varint(buffer, Values((u16)value._array->size()));
+				for(auto& v : *value._array) {
+					encode_field(buffer, v);
+				}
+				break;
+			default:
+				encode_sure_type(buffer, TYPE_NIL);
+				break;
+			}
 		}
 		return true;
 	}

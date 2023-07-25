@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_map>
 
 namespace tunm_cpp {
 
@@ -28,7 +29,7 @@ namespace tunm_cpp {
 	static const u8 TYPE_MAP = 17;
 
 	static const char* STR_TYPE_NIL = "nil";
-	static const char* TYPE_BOOL = "bool";
+	static const char* STR_TYPE_BOOL = "bool";
 	static const char* STR_TYPE_U8 = "u8";
 	static const char* STR_TYPE_I8 = "i8";
 	static const char* STR_TYPE_U16 = "u16";
@@ -53,6 +54,10 @@ namespace tunm_cpp {
 			return strcmp(a, b) < 0;
 		}
 	};
+
+	class Values;
+
+	//static size_t valueHash(const Values& self) noexcept;
 
 	static std::map<const char*, u8, cmp_str> HASH_STR_INT = {
 		{ STR_TYPE_NIL, TYPE_NIL },
@@ -119,44 +124,68 @@ namespace tunm_cpp {
 			double _d;
 			std::string* _str;
 			std::vector<char>* _raw;
-			std::map<Values, Values>* _map;
+			std::unordered_map<Values, Values>* _map;
 			std::vector<Values>* _array;
 		};
 
-		explicit Values() : sub_type(TYPE_NIL), _u8(0) {
+		explicit Values() : sub_type(TYPE_NIL), _u8(0), own(false) {
 
 		}
-		explicit Values(bool _b) : sub_type(TYPE_BOOL), _b(_b) {
+		explicit Values(bool _b) : sub_type(TYPE_BOOL), _b(_b), own(false) {
 		}
-		explicit Values(u8 _u8) : sub_type(TYPE_U8), _u8(_u8) {
+		explicit Values(u8 _u8) : sub_type(TYPE_U8), _u8(_u8), own(false) {
 		}
-		explicit Values(i8 _i8) : sub_type(TYPE_I8), _i8(_i8) {
+		explicit Values(i8 _i8) : sub_type(TYPE_I8), _i8(_i8), own(false) {
 		}
-		explicit Values(u16 _u16) : sub_type(TYPE_U16), _u16(_u16) {
+		explicit Values(u16 _u16) : sub_type(TYPE_U16), _u16(_u16), own(false) {
 		}
-		explicit Values(i16 _i16) : sub_type(TYPE_I16), _i16(_i16) {
+		explicit Values(i16 _i16) : sub_type(TYPE_I16), _i16(_i16), own(false) {
 		}
-		explicit Values(u32 _u32) : sub_type(TYPE_U32), _u32(_u32) {
+		explicit Values(u32 _u32) : sub_type(TYPE_U32), _u32(_u32), own(false) {
 		}
-		explicit Values(i32 _i32) : sub_type(TYPE_I32), _i32(_i32) {
+		explicit Values(i32 _i32) : sub_type(TYPE_I32), _i32(_i32), own(false) {
 		}
-		explicit Values(float _f) : sub_type(TYPE_FLOAT), _f(_f) {
+		explicit Values(u64 _u64) : sub_type(TYPE_U64), _u64(_u64), own(false) {
+		}
+		explicit Values(i64 _i64) : sub_type(TYPE_I64), _i64(_i64), own(false) {
+		}
+		explicit Values(i64 varint, bool isVarint) : sub_type(TYPE_VARINT), _varint(varint), own(false) {
+		}
+		explicit Values(float _f) : sub_type(TYPE_FLOAT), _f(_f), own(false) {
+		}
+		explicit Values(double _d) : sub_type(TYPE_DOUBLE), _d(_d), own(false) {
+		}
+
+		explicit Values(const char* _str) : sub_type(TYPE_STR) {
+			auto val = new std::string(_str);
+			this->_str = val;
+			this->own = true;
+		}
+
+		explicit Values(std::string _str) : sub_type(TYPE_STR) {
+			auto val = new std::string(_str);
+			this->_str = val;
+			this->own = true;
 		}
 		explicit Values(std::string* _str, bool own = true) : sub_type(TYPE_STR), _str(_str), own(own) {
 		}
 		explicit Values(std::vector<char>* _raw, bool own = true) : sub_type(TYPE_RAW), _raw(_raw), own(own) {
 		}
-		explicit Values(std::map<Values, Values>* _map, bool own = true) : sub_type(TYPE_MAP), _map(_map), own(own) {
+		explicit Values(std::unordered_map<Values, Values>* _map, bool own = true) : sub_type(TYPE_MAP), _map(_map), own(own) {
 		}
 		explicit Values(std::vector<Values>* arrays, bool own = true) : sub_type(TYPE_ARR), own(own) {
 			_array =arrays;
 		}
-
-		Values(Values& value) {
-			this->own = false;
-		}
+		//explicit Values(Values& value) {
+		//	this->move(value);
+		//}
 		~Values() {
 			free();
+		}
+
+		static size_t valueHash(const Values& self) noexcept
+		{
+			return self.hash_code();
 		}
 
 		void move(Values& other)
@@ -228,6 +257,62 @@ namespace tunm_cpp {
 			return *this;
 		}
 
+		bool operator ==(const Values& other) const
+		{
+			return this->hash_code() == other.hash_code();
+		}
+
+		bool operator()(const Values& left, const Values& right) const
+		{
+			return left.hash_code() == right.hash_code();
+		}
+
+		size_t operator()(const Values& val) const
+		{
+			return val.hash_code();
+		}
+
+		size_t hash_code() const
+		{
+			switch (this->sub_type)
+			{
+			case TYPE_U8:
+				return this->_u8;
+			case TYPE_I8:
+				return this->_i8;
+			case TYPE_U16:
+				return this->_u16;
+			case TYPE_I16:
+				return this->_i16;
+			case TYPE_U32:
+				return this->_u32;
+			case TYPE_I32:
+				return this->_i32;
+			case TYPE_U64:
+				return this->_u64;
+			case TYPE_I64:
+				return this->_i64;
+			case TYPE_VARINT:
+				return this->_varint;
+			case TYPE_FLOAT:
+				return this->_f * 1000;
+			case TYPE_DOUBLE:
+				return this->_d * 1000000;
+			case TYPE_STR:
+				return std::hash<std::string>()(*this->_str);
+			case TYPE_ARR: {
+				size_t val = 0;
+				for each (auto& var in *this->_array)
+				{
+					val += var.hash_code();
+					return val;
+				}
+			}
+			default:
+				return 0;
+			}
+		}
+
 		i64 get_num() const {
 			switch (this->sub_type)
 			{
@@ -271,7 +356,7 @@ namespace tunm_cpp {
 				delete _raw;
 				break;
 			case TYPE_MAP:
-				delete _map;
+				//delete _map;
 				break;
 			case TYPE_ARR:
 				delete _array;
@@ -288,5 +373,19 @@ namespace tunm_cpp {
 		}
 	};
 
+	//static size_t valueHash(const Values& self) noexcept
+	//{
+	//	return self.hash_code();
+	//}
 }
+
+namespace std {
+	template<>
+	struct hash<tunm_cpp::Values> {
+		size_t operator()(const tunm_cpp::Values& b) const {
+			return  b.hash_code();
+		}
+	};
+}
+
 #endif

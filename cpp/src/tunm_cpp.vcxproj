@@ -83,7 +83,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Buffer.h" />
-    <ClInclude Include="..\include\Config.h" />
     <ClInclude Include="..\include\Decodes.h" />
     <ClInclude Include="..\include\Encodes.h" />
     <ClInclude Include="..\include\Proto.h" />
