@@ -7,3 +7,4 @@
 /dotnet/.vs/
 /python/src/__pycache__/*.pyc
 /rust/Cargo.lock
+.vs

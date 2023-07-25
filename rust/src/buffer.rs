@@ -4,7 +4,7 @@ use std::ptr;
 use std::fmt;
 use std::cmp;
 
-use log::{warn, info};
+use log::{warn, info, trace};
 
 use crate::{ErrorKind, RpResult};
 
@@ -132,7 +132,7 @@ impl Buffer {
                 self.val.resize(512000, 0);
                 warn!("TunmProto: buffer len big than 512k, resize to 512k");
             } else {
-                info!("TunmProto: read all size, reset to zero");
+                trace!("TunmProto: read all size, reset to zero");
             }
         } else if self.rpos > self.val.len() / 2 {
             unsafe {
