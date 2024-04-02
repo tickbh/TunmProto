@@ -128,9 +128,9 @@ impl Buffer {
             self.rpos = 0;
             self.wpos = 0;
 
-            if self.val.len() > 512000 {
-                self.val.resize(512000, 0);
-                warn!("TunmProto: buffer len big than 512k, resize to 512k");
+            if self.val.len() > 51200 {
+                self.val.resize(51200, 0);
+                warn!("TunmProto: buffer len big than 50k, resize to 50k");
             } else {
                 trace!("TunmProto: read all size, reset to zero");
             }
@@ -187,7 +187,7 @@ impl Write for Buffer {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         if self.val.len() < self.wpos + buf.len() {
             self.val.resize((self.wpos + buf.len()) * 2, 0);
-            if self.val.len() > 512000 {
+            if self.val.len() > 51200 {
                 warn!("TunmProto: resize buffer length to {:?}k", self.val.len() / 1024);
             }
         }

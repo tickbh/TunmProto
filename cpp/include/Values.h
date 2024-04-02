@@ -55,10 +55,6 @@ namespace tunm_cpp {
 		}
 	};
 
-	class Values;
-
-	//static size_t valueHash(const Values& self) noexcept;
-
 	static std::map<const char*, u8, cmp_str> HASH_STR_INT = {
 		{ STR_TYPE_NIL, TYPE_NIL },
 		{ STR_TYPE_BOOL, TYPE_BOOL },
@@ -176,16 +172,8 @@ namespace tunm_cpp {
 		explicit Values(std::vector<Values>* arrays, bool own = true) : sub_type(TYPE_ARR), own(own) {
 			_array =arrays;
 		}
-		//explicit Values(Values& value) {
-		//	this->move(value);
-		//}
 		~Values() {
 			free();
-		}
-
-		static size_t valueHash(const Values& self) noexcept
-		{
-			return self.hash_code();
 		}
 
 		void move(Values& other)
@@ -371,12 +359,12 @@ namespace tunm_cpp {
 		void unfree() {
 			this->sub_type = TYPE_NIL;
 		}
+
+		bool is_nil() {
+			return this->sub_type == TYPE_NIL;
+		}
 	};
 
-	//static size_t valueHash(const Values& self) noexcept
-	//{
-	//	return self.hash_code();
-	//}
 }
 
 namespace std {
